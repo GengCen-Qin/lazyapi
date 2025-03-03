@@ -1,0 +1,166 @@
+package forms
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/jroimartin/gocui"
+	"lazyapi/common"
+	"lazyapi/ui"
+)
+
+// ShowNewAPIForm 显示新建API表单
+func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
+	maxX, maxY := g.Size()
+	common.FormInfo.CurrentField = 0 // 重置当前字段为第一个
+
+	// 创建表单容器
+	if v, err := g.SetView("form", maxX/6, maxY/6, maxX*5/6, maxY*5/6); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Title = "新建API"
+		v.Wrap = true
+		common.FormInfo.Active = true
+	}
+
+	// 创建表单字段
+	for i, field := range common.FormInfo.Fields {
+		label := common.FormInfo.Labels[field]
+		fieldName := "form-" + field
+		fieldView, err := g.SetView(fieldName, maxX/6+1, maxY/6+2+i*3, maxX*5/6-1, maxY/6+4+i*3)
+		if err != nil && err != gocui.ErrUnknownView {
+			return err
+		}
+		fieldView.Title = label
+		fieldView.Editable = true
+		fieldView.Wrap = true
+		if field == "method" {
+			fmt.Fprint(fieldView, "GET")
+		}
+
+		// 为每个字段添加键绑定
+		if err := g.SetKeybinding(fieldName, gocui.KeyTab, gocui.ModNone, NextFormField); err != nil {
+			return err
+		}
+		if err := g.SetKeybinding(fieldName, gocui.KeyEnter, gocui.ModNone, SaveNewAPI); err != nil {
+			return err
+		}
+		if err := g.SetKeybinding(fieldName, gocui.KeyCtrlQ, gocui.ModNone, CloseForm); err != nil {
+			return err
+		}
+	}
+
+	// 添加按钮
+	if v, err := g.SetView("form-buttons", maxX/6+1, maxY*5/6-3, maxX*5/6-1, maxY*5/6-1); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Frame = false
+		fmt.Fprint(v, "保存(Enter)  取消(Esc)")
+	}
+
+	// 确保表单及其所有字段保持在最顶层
+	g.SetViewOnTop("form")
+	for _, field := range common.FormInfo.Fields {
+		g.SetViewOnTop("form-" + field)
+	}
+	g.SetViewOnTop("form-buttons")
+
+	// 设置初始焦点到第一个字段
+	if _, err := ui.SetCurrentViewOnTop(g, "form-"+common.FormInfo.Fields[0]); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// CloseForm 关闭表单
+func CloseForm(g *gocui.Gui, v *gocui.View) error {
+	if !common.FormInfo.Active {
+		return nil
+	}
+
+	// 删除所有表单视图
+	g.DeleteView("form")
+	for _, field := range common.FormInfo.Fields {
+		fieldName := "form-" + field
+		g.DeleteView(fieldName)
+
+		// 删除各个字段的键绑定
+		g.DeleteKeybinding(fieldName, gocui.KeyEnter, gocui.ModNone)
+		g.DeleteKeybinding(fieldName, gocui.KeyEsc, gocui.ModNone)
+		g.DeleteKeybinding(fieldName, gocui.KeyTab, gocui.ModNone)
+	}
+	g.DeleteView("form-buttons")
+
+	// 重新设置焦点到左侧视图
+	if _, err := ui.SetCurrentViewOnTop(g, "left"); err != nil {
+		return err
+	}
+	common.FormInfo.Active = false
+
+	return nil
+}
+
+// SaveNewAPI 保存新API
+func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
+	if !common.FormInfo.Active {
+		return nil
+	}
+
+	// 收集表单数据
+	var name, path, method string
+	nameView, _ := g.View("form-name")
+	pathView, _ := g.View("form-path")
+	methodView, _ := g.View("form-method")
+
+	name = strings.TrimSpace(nameView.Buffer())
+	path = strings.TrimSpace(pathView.Buffer())
+	method = strings.TrimSpace(methodView.Buffer())
+
+	// 简单验证
+	if name == "" || path == "" || method == "" {
+		statusView, _ := g.View("status")
+		statusView.Clear()
+		fmt.Fprint(statusView, "错误: 所有字段必须填写")
+		return nil
+	}
+
+	// 添加新API到左侧列表
+	leftView, _ := g.View("left")
+	fmt.Fprintf(leftView, "%s [%s] %s\n", name, method, path)
+
+	// 展示API定义在右上视图
+	rightTopView, _ := g.View("right-top")
+	rightTopView.Clear()
+	fmt.Fprintf(rightTopView, "API名称: %s\n", name)
+	fmt.Fprintf(rightTopView, "请求路径: %s\n", path)
+	fmt.Fprintf(rightTopView, "请求方式: %s\n", method)
+
+	// 关闭表单
+	return CloseForm(g, v)
+}
+
+// NextFormField 在表单字段间切换
+func NextFormField(g *gocui.Gui, v *gocui.View) error {
+	nextField := (common.FormInfo.CurrentField + 1) % len(common.FormInfo.Fields)
+	fieldName := "form-" + common.FormInfo.Fields[nextField]
+
+	if _, err := ui.SetCurrentViewOnTop(g, fieldName); err != nil {
+		return err
+	}
+
+	common.FormInfo.CurrentField = nextField
+	return nil
+}
+
+// SetupFormKeybindings 为表单设置键绑定
+func SetupFormKeybindings(g *gocui.Gui) error {
+	// 左侧视图键绑定 - 'n'键创建新API
+	if err := g.SetKeybinding("left", 'n', gocui.ModNone, ShowNewAPIForm); err != nil {
+		return err
+	}
+
+	return nil
+}
