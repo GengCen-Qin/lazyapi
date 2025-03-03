@@ -11,12 +11,25 @@ var (
 	// 视图分布 - 只有三个视图
 	viewArr = []string{"left", "right-top", "right-bottom"}
 	active  = 0
+
+	// 每个视图对应的状态栏文案
+	statusMessages = map[string]string{
+		"left":         "接口列表 | n(new), e(edit), d(delete)",
+		"right-top":    "接口定义 | s(save), c(cancel)",
+		"right-bottom": "响应定义 | r(request), f(format)",
+	}
 )
 
 func setCurrentViewOnTop(g *gocui.Gui, name string) (*gocui.View, error) {
 	if _, err := g.SetCurrentView(name); err != nil {
 		return nil, err
 	}
+
+	// 当视图变化时更新状态栏
+	if err := updateStatusBar(g, name); err != nil {
+		return nil, err
+	}
+
 	return g.SetViewOnTop(name)
 }
 
@@ -43,6 +56,16 @@ func nextView(g *gocui.Gui, v *gocui.View) error {
 
 func layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
+
+	// 底部状态栏: 横跨整个宽度
+  	if v, err := g.SetView("status", 0, maxY-2, maxX-1, maxY); err != nil {
+        if err != gocui.ErrUnknownView {
+            return err
+        }
+        v.Wrap = true
+        v.Frame = false  // 不显示边框
+        v.FgColor = gocui.ColorBlue // 设置前景色
+    }
 
     // 左边视图占宽度的 3/10
     leftWidth := int(float64(maxX) * 0.3)
@@ -81,17 +104,6 @@ func layout(g *gocui.Gui) error {
         fmt.Fprint(v, "Press TAB to change current view")
     }
 
- 	// 底部状态栏: 横跨整个宽度
-    if v, err := g.SetView("status", 0, maxY-2, maxX-1, maxY); err != nil {
-        if err != gocui.ErrUnknownView {
-            return err
-        }
-        v.Wrap = true
-        v.Frame = false  // 不显示边框
-        v.FgColor = gocui.ColorBlue // 设置前景色
-        fmt.Fprintln(v, "n(new), e(edit), d(delete), r(request)")
-    }
-
 	return nil
 }
 
@@ -122,4 +134,21 @@ func main() {
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
 	}
+}
+
+// 更新状态栏信息
+func updateStatusBar(g *gocui.Gui, viewName string) error {
+	statusView, err := g.View("status")
+	if err != nil {
+		return err
+	}
+
+	statusView.Clear()
+	message, exists := statusMessages[viewName]
+	if !exists {
+		message = "按 TAB 切换视图 | Ctrl+C 退出"
+	}
+
+	fmt.Fprintf(statusView, "%s", message)
+	return nil
 }
