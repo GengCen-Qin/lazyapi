@@ -7,6 +7,7 @@ type FormState struct {
 	Fields       []string
 	Labels       map[string]string
 	IsEditing    bool // 是否处于编辑模式
+	IsDelete     bool // 是否处于删除模式
 }
 
 // 全局可访问的表单状态
@@ -20,6 +21,7 @@ var FormInfo = FormState{
 		"method": "请求方式",
 	},
 	IsEditing: false, // 默认不是编辑模式
+	IsDelete:  false, // 默认不是删除模式
 }
 
 // ViewInfo 视图信息

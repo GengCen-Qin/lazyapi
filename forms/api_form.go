@@ -6,12 +6,13 @@ import (
 
 	"github.com/jroimartin/gocui"
 	"lazyapi/common"
-	"lazyapi/ui"
 	"lazyapi/models"
+	"lazyapi/ui"
 )
 
 // ShowNewAPIForm 显示新建API表单
 func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
+
 	maxX, maxY := g.Size()
 	common.FormInfo.CurrentField = 0 // 重置当前字段为第一个
 
@@ -20,7 +21,13 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.Title = "新建API"
+
+		if common.FormInfo.IsEditing {
+			v.Title = "编辑API"
+		} else {
+			v.Title = "新建API"
+		}
+
 		v.Wrap = true
 		common.FormInfo.Active = true
 	}
@@ -109,6 +116,9 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 	if !common.FormInfo.Active {
 		return nil
 	}
+	if common.FormInfo.IsDelete {
+		return nil
+	}
 
 	// 收集表单数据
 	var name, path, method string
@@ -164,14 +174,26 @@ func NextFormField(g *gocui.Gui, v *gocui.View) error {
 
 // SetupFormKeybindings 为表单设置键绑定
 func SetupFormKeybindings(g *gocui.Gui) error {
-	// 左侧视图键绑定 - 'n'键创建新API
-	if err := g.SetKeybinding("left", 'n', gocui.ModNone, ShowNewAPIForm); err != nil {
+	// 左侧视图键绑定 - 'n'键创建新API或取消删除
+	if err := g.SetKeybinding("left", 'n', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		if common.FormInfo.IsDelete {
+			return CancelDeleteAPI(g, v)
+		}
+		return ShowNewAPIForm(g, v)
+	}); err != nil {
 		return err
 	}
+
 	// 左侧视图键绑定 - 'e'键编辑选中的API
 	if err := g.SetKeybinding("left", 'e', gocui.ModNone, EditAPIForm); err != nil {
 		return err
 	}
+
+	// 左侧视图键绑定 - 'd'键删除选中的API
+	if err := g.SetKeybinding("left", 'd', gocui.ModNone, DeleteAPI); err != nil {
+		return err
+	}
+
 	// 添加上下键绑定
 	if err := g.SetKeybinding("left", gocui.KeyArrowUp, gocui.ModNone, MoveSelectionUp); err != nil {
 		return err
@@ -225,7 +247,9 @@ func UpdateAPIList(g *gocui.Gui) {
 	}
 
 	// 设置光标位置
-	leftView.SetCursor(0, models.SelectedAPI)
+	if models.SelectedAPI >= 0 {
+		leftView.SetCursor(0, models.SelectedAPI)
+	}
 
 	// 更新右上视图的内容
 	rightTopView.Clear()
@@ -234,6 +258,8 @@ func UpdateAPIList(g *gocui.Gui) {
 		fmt.Fprintf(rightTopView, "API名称: %s\n", api.Name)
 		fmt.Fprintf(rightTopView, "请求路径: %s\n", api.Path)
 		fmt.Fprintf(rightTopView, "请求方式: %s\n", api.Method)
+	} else {
+		fmt.Fprint(rightTopView, "无选中API")
 	}
 }
 
@@ -266,5 +292,81 @@ func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
 
 	// 标记为编辑模式
 	common.FormInfo.IsEditing = true
+	return nil
+}
+
+// DeleteAPI 删除选中的API
+func DeleteAPI(g *gocui.Gui, v *gocui.View) error {
+	if len(models.APIList) == 0 || models.SelectedAPI < 0 || models.SelectedAPI >= len(models.APIList) {
+		return nil
+	}
+
+	common.FormInfo.IsEditing = true
+	common.FormInfo.IsDelete = true
+
+	// 显示确认提示
+	statusView, _ := g.View("status")
+	statusView.Clear()
+	fmt.Fprint(statusView, "confirm to delete？(y/n)")
+
+	// 绑定确认和取消操作
+	if err := g.SetKeybinding("", 'y', gocui.ModNone, ConfirmDeleteAPI); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("", 'n', gocui.ModNone, CancelDeleteAPI); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ConfirmDeleteAPI 确认删除API
+func ConfirmDeleteAPI(g *gocui.Gui, v *gocui.View) error {
+	// 删除选中的API
+	models.APIList = append(models.APIList[:models.SelectedAPI], models.APIList[models.SelectedAPI+1:]...)
+
+	// 如果删除后列表为空，重置选中索引
+	if len(models.APIList) == 0 {
+		models.SelectedAPI = -1
+	} else if models.SelectedAPI >= len(models.APIList) {
+		// 如果删除的是最后一个API，选中前一个
+		models.SelectedAPI = len(models.APIList) - 1
+	}
+
+	// 更新视图
+	UpdateAPIList(g)
+
+	// 清除确认提示
+	statusView, _ := g.View("status")
+	statusView.Clear()
+
+	// 删除临时键绑定
+	g.DeleteKeybinding("", 'y', gocui.ModNone)
+	g.DeleteKeybinding("", 'n', gocui.ModNone)
+
+	// 重置删除标志
+	common.FormInfo.IsDelete = false
+
+	return nil
+}
+
+// CancelDeleteAPI 取消删除API
+func CancelDeleteAPI(g *gocui.Gui, v *gocui.View) error {
+	// 清除确认提示
+	statusView, _ := g.View("status")
+	statusView.Clear()
+
+	// 删除临时键绑定
+	g.DeleteKeybinding("", 'y', gocui.ModNone)
+	g.DeleteKeybinding("", 'n', gocui.ModNone)
+
+	// 将焦点重新设置到 left 视图
+	if _, err := ui.SetCurrentViewOnTop(g, "left"); err != nil {
+		return err
+	}
+
+	// 重置删除标志
+	common.FormInfo.IsDelete = false
+
 	return nil
 }
