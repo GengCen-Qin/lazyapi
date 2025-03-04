@@ -7,6 +7,7 @@ import (
 	"github.com/jroimartin/gocui"
 	"lazyapi/common"
 	"lazyapi/ui"
+	"lazyapi/models"
 )
 
 // ShowNewAPIForm 显示新建API表单
@@ -127,9 +128,21 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	// 添加新API到左侧列表
+	// 创建新API并添加到列表
+	newAPI := models.NewAPI(name, path, method)
+	models.APIList = append(models.APIList, newAPI)
+	models.SelectedAPI = len(models.APIList) - 1
+
+	// 更新左侧视图
 	leftView, _ := g.View("left")
-	fmt.Fprintf(leftView, "%s [%s] %s\n", name, method, path)
+	leftView.Clear()
+	for i, api := range models.APIList {
+		if i == models.SelectedAPI {
+			fmt.Fprintf(leftView, "> %s [%s] %s\n", api.Name, api.Method, api.Path)
+		} else {
+			fmt.Fprintf(leftView, "  %s [%s] %s\n", api.Name, api.Method, api.Path)
+		}
+	}
 
 	// 展示API定义在右上视图
 	rightTopView, _ := g.View("right-top")
@@ -162,5 +175,67 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// 添加上下键绑定
+	if err := g.SetKeybinding("left", gocui.KeyArrowUp, gocui.ModNone, MoveSelectionUp); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("left", gocui.KeyArrowDown, gocui.ModNone, MoveSelectionDown); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// MoveSelectionUp 向上移动选择
+func MoveSelectionUp(g *gocui.Gui, v *gocui.View) error {
+	if len(models.APIList) == 0 {
+		return nil
+	}
+
+	if models.SelectedAPI > 0 {
+		models.SelectedAPI--
+	}
+	UpdateAPIList(g)
+	return nil
+}
+
+// MoveSelectionDown 向下移动选择
+func MoveSelectionDown(g *gocui.Gui, v *gocui.View) error {
+	if len(models.APIList) == 0 {
+		return nil
+	}
+
+	if models.SelectedAPI < len(models.APIList)-1 {
+		models.SelectedAPI++
+	}
+	UpdateAPIList(g)
+	return nil
+}
+
+// UpdateAPIList 更新左侧API列表显示
+func UpdateAPIList(g *gocui.Gui) {
+	leftView, _ := g.View("left")
+	rightTopView, _ := g.View("right-top")
+
+	// 清空并重新渲染左侧视图
+	leftView.Clear()
+	for i, api := range models.APIList {
+		if i == models.SelectedAPI {
+			fmt.Fprintf(leftView, "> %s [%s] %s\n", api.Name, api.Method, api.Path)
+		} else {
+			fmt.Fprintf(leftView, "  %s [%s] %s\n", api.Name, api.Method, api.Path)
+		}
+	}
+
+	// 设置光标位置
+	leftView.SetCursor(0, models.SelectedAPI)
+
+	// 更新右上视图的内容
+	rightTopView.Clear()
+	if models.SelectedAPI >= 0 && models.SelectedAPI < len(models.APIList) {
+		api := models.APIList[models.SelectedAPI]
+		fmt.Fprintf(rightTopView, "API名称: %s\n", api.Name)
+		fmt.Fprintf(rightTopView, "请求路径: %s\n", api.Path)
+		fmt.Fprintf(rightTopView, "请求方式: %s\n", api.Method)
+	}
 }

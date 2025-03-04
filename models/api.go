@@ -15,3 +15,7 @@ func NewAPI(name, path, method string) *API {
 		Method: method,
 	}
 }
+
+// APIList 存储所有API
+var APIList []*API
+var SelectedAPI int = -1

@@ -28,6 +28,9 @@ func Layout(g *gocui.Gui) error {
 		}
 		v.Title = "接口列表"
 		v.Wrap = true
+		v.Highlight = true
+		v.SelBgColor = gocui.ColorGreen
+		v.SelFgColor = gocui.ColorBlack
 
 		if _, err = SetCurrentViewOnTop(g, "left"); err != nil {
 			return err
