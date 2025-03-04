@@ -50,7 +50,6 @@ func Layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Title = "响应定义"
-		v.Editable = true
 		v.Wrap = true
 	}
 

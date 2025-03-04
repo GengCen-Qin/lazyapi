@@ -123,7 +123,7 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 	if name == "" || path == "" || method == "" {
 		statusView, _ := g.View("status")
 		statusView.Clear()
-		fmt.Fprint(statusView, "错误: 所有字段必须填写")
+		fmt.Fprint(statusView, "all fields must input !!!")
 		return nil
 	}
 

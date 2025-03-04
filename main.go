@@ -16,7 +16,6 @@ func main() {
 	defer g.Close()
 
 	g.Highlight = true
-	g.Cursor = true
 	g.SelFgColor = gocui.ColorGreen
 
 	// 初始化UI

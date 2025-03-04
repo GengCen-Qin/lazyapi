@@ -52,9 +52,6 @@ func NextView(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 
-	// 所有视图都是可编辑的
-	g.Cursor = true
-
 	common.Active = nextIndex
 	return nil
 }
