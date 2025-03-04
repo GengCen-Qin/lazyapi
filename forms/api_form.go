@@ -104,7 +104,7 @@ func CloseForm(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
-// SaveNewAPI 保存新API
+// SaveNewAPI 保存API（新建或编辑）
 func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 	if !common.FormInfo.Active {
 		return nil
@@ -128,30 +128,24 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	// 创建新API并添加到列表
-	newAPI := models.NewAPI(name, path, method)
-	models.APIList = append(models.APIList, newAPI)
-	models.SelectedAPI = len(models.APIList) - 1
-
-	// 更新左侧视图
-	leftView, _ := g.View("left")
-	leftView.Clear()
-	for i, api := range models.APIList {
-		if i == models.SelectedAPI {
-			fmt.Fprintf(leftView, "> %s [%s] %s\n", api.Name, api.Method, api.Path)
-		} else {
-			fmt.Fprintf(leftView, "  %s [%s] %s\n", api.Name, api.Method, api.Path)
-		}
+	// 如果是编辑模式，更新现有API
+	if common.FormInfo.IsEditing {
+		api := models.APIList[models.SelectedAPI]
+		api.Name = name
+		api.Path = path
+		api.Method = method
+	} else {
+		// 否则，创建新API并添加到列表
+		newAPI := models.NewAPI(name, path, method)
+		models.APIList = append(models.APIList, newAPI)
+		models.SelectedAPI = len(models.APIList) - 1
 	}
 
-	// 展示API定义在右上视图
-	rightTopView, _ := g.View("right-top")
-	rightTopView.Clear()
-	fmt.Fprintf(rightTopView, "API名称: %s\n", name)
-	fmt.Fprintf(rightTopView, "请求路径: %s\n", path)
-	fmt.Fprintf(rightTopView, "请求方式: %s\n", method)
+	// 更新视图
+	UpdateAPIList(g)
 
 	// 关闭表单
+	common.FormInfo.IsEditing = false
 	return CloseForm(g, v)
 }
 
@@ -174,7 +168,10 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("left", 'n', gocui.ModNone, ShowNewAPIForm); err != nil {
 		return err
 	}
-
+	// 左侧视图键绑定 - 'e'键编辑选中的API
+	if err := g.SetKeybinding("left", 'e', gocui.ModNone, EditAPIForm); err != nil {
+		return err
+	}
 	// 添加上下键绑定
 	if err := g.SetKeybinding("left", gocui.KeyArrowUp, gocui.ModNone, MoveSelectionUp); err != nil {
 		return err
@@ -238,4 +235,36 @@ func UpdateAPIList(g *gocui.Gui) {
 		fmt.Fprintf(rightTopView, "请求路径: %s\n", api.Path)
 		fmt.Fprintf(rightTopView, "请求方式: %s\n", api.Method)
 	}
+}
+
+func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
+	if len(models.APIList) == 0 || models.SelectedAPI < 0 || models.SelectedAPI >= len(models.APIList) {
+		return nil
+	}
+
+	// 获取当前选中的API
+	api := models.APIList[models.SelectedAPI]
+
+	// 显示表单并填充数据
+	if err := ShowNewAPIForm(g, v); err != nil {
+		return err
+	}
+
+	// 填充表单字段
+	if nameView, err := g.View("form-name"); err == nil {
+		nameView.Clear()
+		fmt.Fprint(nameView, api.Name)
+	}
+	if pathView, err := g.View("form-path"); err == nil {
+		pathView.Clear()
+		fmt.Fprint(pathView, api.Path)
+	}
+	if methodView, err := g.View("form-method"); err == nil {
+		methodView.Clear()
+		fmt.Fprint(methodView, api.Method)
+	}
+
+	// 标记为编辑模式
+	common.FormInfo.IsEditing = true
+	return nil
 }

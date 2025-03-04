@@ -6,6 +6,7 @@ type FormState struct {
 	CurrentField int
 	Fields       []string
 	Labels       map[string]string
+	IsEditing    bool // 是否处于编辑模式
 }
 
 // 全局可访问的表单状态
@@ -18,6 +19,7 @@ var FormInfo = FormState{
 		"path":   "请求路径",
 		"method": "请求方式",
 	},
+	IsEditing: false, // 默认不是编辑模式
 }
 
 // ViewInfo 视图信息
