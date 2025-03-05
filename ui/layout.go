@@ -15,6 +15,7 @@ func Layout(g *gocui.Gui) error {
 		}
 		v.Wrap = true
 		v.Frame = false  // 不显示边框
+		v.Editable = false
 		v.FgColor = gocui.ColorBlue // 设置前景色
 	}
 
@@ -31,6 +32,7 @@ func Layout(g *gocui.Gui) error {
 		v.Highlight = true
 		v.SelBgColor = gocui.ColorGreen
 		v.SelFgColor = gocui.ColorBlack
+		v.Editable = false
 
 		if _, err = SetCurrentViewOnTop(g, "left"); err != nil {
 			return err
@@ -45,6 +47,7 @@ func Layout(g *gocui.Gui) error {
 		v.Title = "接口定义"
 		v.Wrap = true
 		v.Autoscroll = true
+		v.Editable = false
 	}
 
 	// 右下视图: 宽度 7/10，高度为 1/2
@@ -53,6 +56,7 @@ func Layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Title = "响应定义"
+		v.Editable = false
 		v.Wrap = true
 	}
 

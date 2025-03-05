@@ -12,7 +12,7 @@ import (
 
 // ShowNewAPIForm 显示新建API表单
 func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
-
+	common.FormInfo.Active = true
 	maxX, maxY := g.Size()
 	common.FormInfo.CurrentField = 0 // 重置当前字段为第一个
 
@@ -21,15 +21,14 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-
-		if common.FormInfo.IsEditing {
-			v.Title = "编辑API"
-		} else {
-			v.Title = "新建API"
-		}
-
 		v.Wrap = true
-		common.FormInfo.Active = true
+	}
+
+	var form_view, _ = g.View("form")
+	if common.FormInfo.IsEditing {
+    	form_view.Title = "编辑API"
+	} else {
+		form_view.Title = "新建API"
 	}
 
 	// 创建表单字段
@@ -48,13 +47,19 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 		}
 
 		// 为每个字段添加键绑定
+		if err := g.SetKeybinding(fieldName, gocui.KeyArrowDown, gocui.ModNone, NextFormField); err != nil {
+			return err
+		}
 		if err := g.SetKeybinding(fieldName, gocui.KeyTab, gocui.ModNone, NextFormField); err != nil {
+			return err
+		}
+		if err := g.SetKeybinding(fieldName, gocui.KeyArrowUp, gocui.ModNone, BeforeFormField); err != nil {
 			return err
 		}
 		if err := g.SetKeybinding(fieldName, gocui.KeyEnter, gocui.ModNone, SaveNewAPI); err != nil {
 			return err
 		}
-		if err := g.SetKeybinding(fieldName, gocui.KeyCtrlQ, gocui.ModNone, CloseForm); err != nil {
+		if err := g.SetKeybinding(fieldName, gocui.KeyEsc, gocui.ModNone, CloseForm); err != nil {
 			return err
 		}
 	}
@@ -80,6 +85,8 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 
+	g.Cursor = true
+
 	return nil
 }
 
@@ -99,6 +106,8 @@ func CloseForm(g *gocui.Gui, v *gocui.View) error {
 		g.DeleteKeybinding(fieldName, gocui.KeyEnter, gocui.ModNone)
 		g.DeleteKeybinding(fieldName, gocui.KeyEsc, gocui.ModNone)
 		g.DeleteKeybinding(fieldName, gocui.KeyTab, gocui.ModNone)
+		g.DeleteKeybinding(fieldName, gocui.KeyArrowUp, gocui.ModNone)
+		g.DeleteKeybinding(fieldName, gocui.KeyArrowDown, gocui.ModNone)
 	}
 	g.DeleteView("form-buttons")
 
@@ -107,7 +116,7 @@ func CloseForm(g *gocui.Gui, v *gocui.View) error {
 		return err
 	}
 	common.FormInfo.Active = false
-
+	g.Cursor = false
 	return nil
 }
 
@@ -156,6 +165,8 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 
 	// 关闭表单
 	common.FormInfo.IsEditing = false
+	// 关闭光标
+	g.Cursor = false
 	return CloseForm(g, v)
 }
 
@@ -169,6 +180,21 @@ func NextFormField(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	common.FormInfo.CurrentField = nextField
+	return nil
+}
+
+func BeforeFormField(g *gocui.Gui, v *gocui.View) error {
+	// 计算前一个字段的索引
+	prevField := (common.FormInfo.CurrentField - 1 + len(common.FormInfo.Fields)) % len(common.FormInfo.Fields)
+	fieldName := "form-" + common.FormInfo.Fields[prevField]
+
+	// 将焦点设置到前一个字段
+	if _, err := ui.SetCurrentViewOnTop(g, fieldName); err != nil {
+		return err
+	}
+
+	// 更新当前字段索引
+	common.FormInfo.CurrentField = prevField
 	return nil
 }
 
@@ -255,11 +281,11 @@ func UpdateAPIList(g *gocui.Gui) {
 	rightTopView.Clear()
 	if models.SelectedAPI >= 0 && models.SelectedAPI < len(models.APIList) {
 		api := models.APIList[models.SelectedAPI]
-		fmt.Fprintf(rightTopView, "API名称: %s\n", api.Name)
-		fmt.Fprintf(rightTopView, "请求路径: %s\n", api.Path)
-		fmt.Fprintf(rightTopView, "请求方式: %s\n", api.Method)
+		fmt.Fprintf(rightTopView, "NAME: %s\n", api.Name)
+		fmt.Fprintf(rightTopView, "PATH: %s\n", api.Path)
+		fmt.Fprintf(rightTopView, "METHOD: %s\n", api.Method)
 	} else {
-		fmt.Fprint(rightTopView, "无选中API")
+		fmt.Fprint(rightTopView, "EMPTY API")
 	}
 }
 
@@ -267,6 +293,9 @@ func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
 	if len(models.APIList) == 0 || models.SelectedAPI < 0 || models.SelectedAPI >= len(models.APIList) {
 		return nil
 	}
+
+	// 标记为编辑模式
+	common.FormInfo.IsEditing = true
 
 	// 获取当前选中的API
 	api := models.APIList[models.SelectedAPI]
@@ -289,9 +318,6 @@ func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
 		methodView.Clear()
 		fmt.Fprint(methodView, api.Method)
 	}
-
-	// 标记为编辑模式
-	common.FormInfo.IsEditing = true
 	return nil
 }
 
@@ -301,13 +327,12 @@ func DeleteAPI(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	common.FormInfo.IsEditing = true
 	common.FormInfo.IsDelete = true
 
 	// 显示确认提示
 	statusView, _ := g.View("status")
 	statusView.Clear()
-	fmt.Fprint(statusView, "confirm to delete？(y/n)")
+	fmt.Fprint(statusView, "confirm to delete ? (y/n)")
 
 	// 绑定确认和取消操作
 	if err := g.SetKeybinding("", 'y', gocui.ModNone, ConfirmDeleteAPI); err != nil {

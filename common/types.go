@@ -2,7 +2,7 @@ package common
 
 // FormState 表单状态
 type FormState struct {
-	Active       bool
+	Active       bool // 激活模式
 	CurrentField int
 	Fields       []string
 	Labels       map[string]string
@@ -32,8 +32,8 @@ var (
 
 	// StatusMessages - 每个视图对应的状态栏文案
 	StatusMessages = map[string]string{
-		"left":         "接口列表 | n(new), e(edit), d(delete)",
-		"right-top":    "接口定义 | s(save), c(cancel)",
-		"right-bottom": "响应定义 | r(request), f(format)",
+		"left":         "API_LIST | n(new), e(edit), d(delete)",
+		"right-top":    "REQUEST_DEFINITION | s(save), c(cancel)",
+		"right-bottom": "RESPOND_DEFINITION | r(request), f(format)",
 	}
 )
