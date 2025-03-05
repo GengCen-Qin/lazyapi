@@ -267,9 +267,9 @@ func UpdateAPIList(g *gocui.Gui) {
 	leftView.Clear()
 	for i, api := range models.APIList {
 		if i == models.SelectedAPI {
-			fmt.Fprintf(leftView, "> %s [%s] %s\n", api.Name, api.Method, api.Path)
+			fmt.Fprintf(leftView, "> %s [%s] \n", api.Name, api.Method)
 		} else {
-			fmt.Fprintf(leftView, "  %s [%s] %s\n", api.Name, api.Method, api.Path)
+			fmt.Fprintf(leftView, "  %s [%s] \n", api.Name, api.Method)
 		}
 	}
 

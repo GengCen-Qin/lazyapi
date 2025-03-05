@@ -19,10 +19,10 @@ func Layout(g *gocui.Gui) error {
 		v.FgColor = gocui.ColorBlue // 设置前景色
 	}
 
-	// 左边视图占宽度的 3/10
-	leftWidth := int(float64(maxX) * 0.3)
+	// 左边视图占宽度的 1/5 (20%)
+	leftWidth := int(float64(maxX) * 0.2)
 
-	// 左边视图: 占整个高度，宽度为 3/10
+	// 左边视图: 占整个高度，宽度为 1/5
 	if v, err := g.SetView("left", 0, 0, leftWidth-1, maxY-2); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -39,7 +39,7 @@ func Layout(g *gocui.Gui) error {
 		}
 	}
 
-	// 右上视图: 宽度 7/10，高度为 1/2
+	// 右上视图: 宽度 4/5，高度为 1/2
 	if v, err := g.SetView("right-top", leftWidth, 0, maxX-1, maxY/2-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -50,7 +50,7 @@ func Layout(g *gocui.Gui) error {
 		v.Editable = false
 	}
 
-	// 右下视图: 宽度 7/10，高度为 1/2
+	// 右下视图: 宽度 4/5，高度为 1/2
 	if v, err := g.SetView("right-bottom", leftWidth, maxY/2, maxX-1, maxY-2); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
