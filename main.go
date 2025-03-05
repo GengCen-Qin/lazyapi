@@ -17,6 +17,7 @@ func main() {
 
 	g.Highlight = true
 	g.SelFgColor = gocui.ColorGreen
+	g.InputEsc = true
 
 	// 初始化UI
 	if err := ui.Initialize(g); err != nil {

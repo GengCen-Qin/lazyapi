@@ -59,6 +59,7 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 		if err := g.SetKeybinding(fieldName, gocui.KeyEnter, gocui.ModNone, SaveNewAPI); err != nil {
 			return err
 		}
+
 		if err := g.SetKeybinding(fieldName, gocui.KeyEsc, gocui.ModNone, CloseForm); err != nil {
 			return err
 		}
