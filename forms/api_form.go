@@ -148,6 +148,13 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
+	if  strings.ToUpper(method) != "GET" && strings.ToUpper(method) != "POST" {
+		statusView, _ := g.View("status")
+		statusView.Clear()
+		fmt.Fprint(statusView, "method must be GET or POST !!!")
+		return nil
+	}
+
 	// 如果是编辑模式，更新现有API
 	if common.FormInfo.IsEditing {
 		api := models.APIList[models.SelectedAPI]
@@ -282,9 +289,8 @@ func UpdateAPIList(g *gocui.Gui) {
 	rightTopView.Clear()
 	if models.SelectedAPI >= 0 && models.SelectedAPI < len(models.APIList) {
 		api := models.APIList[models.SelectedAPI]
-		fmt.Fprintf(rightTopView, "NAME: %s\n", api.Name)
+		fmt.Fprintf(rightTopView, "NAME: %s \t METHOD: %s\n", api.Name, api.Method)
 		fmt.Fprintf(rightTopView, "PATH: %s\n", api.Path)
-		fmt.Fprintf(rightTopView, "METHOD: %s\n", api.Method)
 	} else {
 		fmt.Fprint(rightTopView, "EMPTY API")
 	}
