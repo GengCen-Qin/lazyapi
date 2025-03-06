@@ -14,12 +14,12 @@ type FormState struct {
 var FormInfo = FormState{
 	Active:       false,
 	CurrentField: 0,
-	Fields:       []string{"name", "path", "method", "params"},
+	Fields:       []string{"name", "method", "path", "params"},
 	Labels: map[string]string{
 		"name":   "API 名称",
 		"path":   "请求路径",
 		"method": "请求方式",
-		"params": "请求参数",
+		"params": "请求参数(JSON)",
 	},
 	IsEditing: false, // 默认不是编辑模式
 	IsDelete:  false, // 默认不是删除模式

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"log"
 )
 
 // API 表示一个API接口的数据结构
@@ -14,12 +15,31 @@ type API struct {
 
 // NewAPI 创建一个新API
 func NewAPI(name, path, method string, params string) *API {
+	params = formatJSON(params)
 	return &API{
 		Name:   name,
 		Path:   path,
 		Method: method,
 		Params: params,
 	}
+}
+
+func formatJSON(jsonString string) string {
+    var jsonObj map[string]interface{}
+
+    // Parse the JSON into a map
+    err := json.Unmarshal([]byte(jsonString), &jsonObj)
+    if err != nil {
+        log.Fatalf("Error occured during unmarshalling. %s", err)
+    }
+
+    // Format the json
+    formattedJSON, err := json.MarshalIndent(jsonObj, "", "    ")
+    if err != nil {
+        log.Fatalf("Error occured during marshalling. %s", err)
+    }
+
+    return string(formattedJSON)
 }
 
 // GetParams 获取请求参数

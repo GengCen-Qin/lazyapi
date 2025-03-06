@@ -34,10 +34,29 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	// 创建表单字段
-	for i, field := range common.FormInfo.Fields {
+	for _, field := range common.FormInfo.Fields {
 		label := common.FormInfo.Labels[field]
 		fieldName := "form-" + field
-		fieldView, err := g.SetView(fieldName, maxX/6+1, maxY/6+2+i*3, maxX*5/6-1, maxY/6+4+i*3)
+		var fieldView *gocui.View
+		var err error
+
+		// 调整视图布局
+		switch field {
+		case "name", "method":
+			// 将 "名称" 和 "请求方式" 放在同一行
+			if field == "name" {
+				fieldView, err = g.SetView(fieldName, maxX/6+1, maxY/6+2, maxX/2-1, maxY/6+4)
+			} else {
+				fieldView, err = g.SetView(fieldName, maxX/2+1, maxY/6+2, maxX*5/6-1, maxY/6+4)
+			}
+		case "path":
+			// "请求路径" 放在第二行
+			fieldView, err = g.SetView(fieldName, maxX/6+1, maxY/6+5, maxX*5/6-1, maxY/6+7)
+		case "params":
+			// "请求参数" 放在第三行，并且视图更大
+			fieldView, err = g.SetView(fieldName, maxX/6+1, maxY/6+8, maxX*5/6-1, maxY*5/6-1)
+		}
+
 		if err != nil && err != gocui.ErrUnknownView {
 			return err
 		}
@@ -48,25 +67,26 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 			fmt.Fprint(fieldView, "GET")
 		}
 		if field == "params" {
-			fmt.Fprint(fieldView, "{  }")
+			fmt.Fprint(fieldView, "{\n\n\n}")
 		}
 
 		// 为每个字段添加键绑定
-		if err := g.SetKeybinding(fieldName, gocui.KeyArrowDown, gocui.ModNone, NextFormField); err != nil {
-			return err
-		}
 		if err := g.SetKeybinding(fieldName, gocui.KeyTab, gocui.ModNone, NextFormField); err != nil {
 			return err
 		}
-		if err := g.SetKeybinding(fieldName, gocui.KeyArrowUp, gocui.ModNone, BeforeFormField); err != nil {
-			return err
-		}
-		if err := g.SetKeybinding(fieldName, gocui.KeyEnter, gocui.ModNone, SaveNewAPI); err != nil {
-			return err
-		}
-
 		if err := g.SetKeybinding(fieldName, gocui.KeyEsc, gocui.ModNone, CloseForm); err != nil {
 			return err
+		}
+		if field != "params" {
+			if err := g.SetKeybinding(fieldName, gocui.KeyEnter, gocui.ModNone, SaveNewAPI); err != nil {
+				return err
+			}
+			if err := g.SetKeybinding(fieldName, gocui.KeyArrowDown, gocui.ModNone, NextFormField); err != nil {
+				return err
+			}
+			if err := g.SetKeybinding(fieldName, gocui.KeyArrowUp, gocui.ModNone, BeforeFormField); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -330,6 +350,7 @@ func UpdateAPIList(g *gocui.Gui) {
 		api := models.APIList[models.SelectedAPI]
 		fmt.Fprintf(rightTopView, "NAME: %s \t METHOD: %s\n", api.Name, api.Method)
 		fmt.Fprintf(rightTopView, "PATH: %s\n", api.Path)
+		fmt.Fprintf(rightTopView, "Params: \n%s\n", api.Params)
 	} else {
 		fmt.Fprint(rightTopView, "EMPTY API")
 	}
@@ -363,6 +384,10 @@ func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
 	if methodView, err := g.View("form-method"); err == nil {
 		methodView.Clear()
 		fmt.Fprint(methodView, api.Method)
+	}
+	if methodView, err := g.View("form-params"); err == nil {
+		methodView.Clear()
+		fmt.Fprint(methodView, api.Params)
 	}
 	return nil
 }
