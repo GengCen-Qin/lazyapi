@@ -435,81 +435,61 @@ func RequestAPI(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	if len(params) == 0 {
+		// 没有参数直接请求
 		return sendRequest(g, api, params)
 	}
 
-	// // 显示参数编辑表并填充参数数据
-	// if err := ShowParamsEditForm(g, v); err != nil {
-	// 	return err
-	// }
 
-	// // 填充参数数据
-	// if paramsView, err := g.View("form-params"); err == nil {
-	// 	paramsView.Clear()
-	// 	paramsData, _ := json.MarshalIndent(params, "", "  ")
-	// 	fmt.Fprint(paramsView, string(paramsData))
-	// }
-
-
-	// // 绑定键盘操作 'r' 发送请求
-	// if err := g.SetKeybinding("form-params", 'r', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
-	// 	paramsView, _ := g.View("form-params")
-	// 	paramsData := strings.TrimSpace(paramsView.Buffer())
-
-	// 	// 解析参数数据为json
-	// 	json.Unmarshal([]byte(paramsData), &params)
-	// 	return sendRequest(g, api, params)
-	// }); err != nil {
-	// 	return err
-	// }
-
-	return nil
-}
-
-func ShowParamsEditForm(g *gocui.Gui, v *gocui.View) error {
-	common.FormInfo.Active = true
+	// 创建新的view来展示和编辑params
 	maxX, maxY := g.Size()
-	common.FormInfo.CurrentField = 0 // 重置当前字段为第一个
+	viewWidth, viewHeight := 50, 8
+	left := maxX/2 - viewWidth/2
+	right := maxX/2 + viewWidth/2
+	top := maxY/2 - viewHeight/2
+	bottom := maxY/2 + viewHeight/2
 
-	// 创建表单容器
-	if v, err := g.SetView("form", maxX/3, maxY/3, maxX*2/3, maxY*2/3); err != nil {
+	pv, err := g.SetView("paramView", left, top, right, bottom)
+
+	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.Wrap = true
-    	v.Title = "编辑参数"
-		v.Editable = false
-	}
+		pv.Title = "编辑请求参数"
+		pv.Editable = true
+		pv.Wrap = true
+		g.SetCurrentView("paramView")
+		g.Cursor = true
 
-	// 创建参数字段
-	fieldName := "form-params"
-	if fieldView, err := g.SetView(fieldName, maxX/3+1, maxY/3+2, maxX*2/3-1, maxY*2/3-2); err != nil {
-		if err != gocui.ErrUnknownView {
+		// 在 view 中显示默认的 params
+		fmt.Fprintln(pv, api.Params)
+
+		// 绑定 'r' 事件到函数，发送请求
+		g.SetKeybinding("paramView", 'r', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+			// 从 view 获取输入的 params
+			pv, _ := g.View("paramView")
+			inputParams := pv.Buffer()
+			var inputParamsMap map[string]interface{}
+			jsonErr := json.Unmarshal([]byte(inputParams), &inputParamsMap)
+			if jsonErr != nil {
+				return jsonErr // handle error appropriately
+			}
+			// 发送请求
+			err := sendRequest(g, api, inputParamsMap)
+
+			// Remove the paramView and associated keybindings after the request
+			if err := g.DeleteView("paramView"); err != nil {
+				return err
+			}
+
+			// Remove keybindings
+			if err := g.DeleteKeybinding("paramView", 'r', gocui.ModNone); err != nil {
+				return err
+        	}
+
+            g.Cursor = false
 			return err
-		}
-		fieldView.Title = "Params"
-		fieldView.Editable = true
-		fieldView.Wrap = true
-
-		// 添加键绑定
-		if err := g.SetKeybinding(fieldName, gocui.KeyTab, gocui.ModNone, NextFormField); err != nil {
-			return err
-		}
-		if err := g.SetKeybinding(fieldName, gocui.KeyEsc, gocui.ModNone, CloseForm); err != nil {
-			return err
-		}
+		})
 	}
-
-	// 确保表单及其所有字段保持在最顶层
-	g.SetViewOnTop("form")
-	g.SetViewOnTop(fieldName)
-
-	// 设置初始焦点到参数字段
-	if _, err := ui.SetCurrentViewOnTop(g, fieldName); err != nil {
-		return err
-	}
-
-	g.Cursor = true
 
 	return nil
 }
@@ -529,6 +509,7 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 	respBody := resp.Body()
 
 	bottomView, _ := g.View("right-bottom")
+	bottomView.Clear()
 	fmt.Fprint(bottomView, string(respBody))
 
 	return nil
