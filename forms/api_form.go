@@ -1,13 +1,15 @@
 package forms
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
-	"github.com/jroimartin/gocui"
 	"lazyapi/common"
 	"lazyapi/models"
 	"lazyapi/ui"
+
+	"github.com/jroimartin/gocui"
 )
 
 // ShowNewAPIForm 显示新建API表单
@@ -44,6 +46,9 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 		fieldView.Wrap = true
 		if field == "method" {
 			fmt.Fprint(fieldView, "GET")
+		}
+		if field == "params" {
+			fmt.Fprint(fieldView, "{  }")
 		}
 
 		// 为每个字段添加键绑定
@@ -131,29 +136,23 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	// 收集表单数据
-	var name, path, method string
+	var name, path, method, params string
 	nameView, _ := g.View("form-name")
 	pathView, _ := g.View("form-path")
 	methodView, _ := g.View("form-method")
+	paramsView, _ := g.View("form-params")
 
 	name = strings.TrimSpace(nameView.Buffer())
 	path = strings.TrimSpace(pathView.Buffer())
 	method = strings.TrimSpace(methodView.Buffer())
+	params = strings.TrimSpace(paramsView.Buffer())
 
-	// 简单验证
-	if name == "" || path == "" || method == "" {
-		statusView, _ := g.View("status")
-		statusView.Clear()
-		fmt.Fprint(statusView, "all fields must input !!!")
-		return nil
-	}
-
-	if  strings.ToUpper(method) != "GET" && strings.ToUpper(method) != "POST" {
-		statusView, _ := g.View("status")
-		statusView.Clear()
-		fmt.Fprint(statusView, "method must be GET or POST !!!")
-		return nil
-	}
+	if err := validateAPIForm(g, name, path, method, params); err != nil {
+        statusView, _ := g.View("status")
+        statusView.Clear()
+        fmt.Fprint(statusView, err.Error())
+        return nil
+    }
 
 	// 如果是编辑模式，更新现有API
 	if common.FormInfo.IsEditing {
@@ -163,7 +162,7 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 		api.Method = method
 	} else {
 		// 否则，创建新API并添加到列表
-		newAPI := models.NewAPI(name, path, method)
+		newAPI := models.NewAPI(name, path, method, params)
 		models.APIList = append(models.APIList, newAPI)
 		models.SelectedAPI = len(models.APIList) - 1
 	}
@@ -176,6 +175,46 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 	// 关闭光标
 	g.Cursor = false
 	return CloseForm(g, v)
+}
+
+func validateAPIForm(g *gocui.Gui, name, path, method, params string) error {
+	var emptyFields []string
+	if name == "" {
+	    emptyFields = append(emptyFields, "name")
+	}
+	if path == "" {
+	    emptyFields = append(emptyFields, "path")
+	}
+	if method == "" {
+	    emptyFields = append(emptyFields, "method")
+	}
+
+	if len(emptyFields) > 0 {
+	    warnFormItem(g, emptyFields)
+	    return fmt.Errorf("the following fields must be filled: %v", emptyFields)
+	}
+
+    // 验证 params 是否为有效的 JSON
+    if !json.Valid([]byte(params)) {
+   		warnFormItem(g, []string{"params"})
+        return fmt.Errorf("params must be a json")
+    }
+
+    // 验证 method 是否为 GET 或 POST
+    method = strings.ToUpper(method)
+    if method != "GET" && method != "POST" {
+  		warnFormItem(g, []string{"method"})
+        return fmt.Errorf("method must be GET or POST !!!")
+    }
+
+    return nil
+}
+
+func warnFormItem(g *gocui.Gui, fields []string) {
+	for _, view := range fields {
+		view, _ := g.View("form-"+view)
+		view.BgColor = gocui.ColorRed
+    }
 }
 
 // NextFormField 在表单字段间切换
