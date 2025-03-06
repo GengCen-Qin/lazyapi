@@ -10,6 +10,7 @@ import (
 	"lazyapi/ui"
 
 	"github.com/jroimartin/gocui"
+	"github.com/go-resty/resty/v2"
 )
 
 // ShowNewAPIForm 显示新建API表单
@@ -67,7 +68,10 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 			fmt.Fprint(fieldView, "GET")
 		}
 		if field == "params" {
-			fmt.Fprint(fieldView, "{\n\n\n}")
+			fmt.Fprint(fieldView, "{}")
+		}
+		if field == "path" {
+			fmt.Fprint(fieldView, "http://www.baidu.com")
 		}
 
 		// 为每个字段添加键绑定
@@ -214,6 +218,11 @@ func validateAPIForm(g *gocui.Gui, name, path, method, params string) error {
 	    return fmt.Errorf("the following fields must be filled: %v", emptyFields)
 	}
 
+	if !(strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")) {
+  		warnFormItem(g, []string{"path"})
+		emptyFields = append(emptyFields, "path")
+	}
+
     // 验证 params 是否为有效的 JSON
     if !json.Valid([]byte(params)) {
    		warnFormItem(g, []string{"params"})
@@ -287,11 +296,8 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 		return err
 	}
 
-	// 添加上下键绑定
-	if err := g.SetKeybinding("left", gocui.KeyArrowUp, gocui.ModNone, MoveSelectionUp); err != nil {
-		return err
-	}
-	if err := g.SetKeybinding("left", gocui.KeyArrowDown, gocui.ModNone, MoveSelectionDown); err != nil {
+	// 右上视图键绑定 - 'r'键请求当前API
+	if err := g.SetKeybinding("right-top", 'r', gocui.ModNone, RequestAPI); err != nil {
 		return err
 	}
 
@@ -412,6 +418,118 @@ func DeleteAPI(g *gocui.Gui, v *gocui.View) error {
 	if err := g.SetKeybinding("", 'n', gocui.ModNone, CancelDeleteAPI); err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func RequestAPI(g *gocui.Gui, v *gocui.View) error {
+	if len(models.APIList) == 0 || models.SelectedAPI < 0 || models.SelectedAPI >= len(models.APIList) {
+		return nil
+	}
+
+	api := models.APIList[models.SelectedAPI]
+
+	params, err := api.GetParams()
+	if err != nil {
+		return err // or handle error appropriately
+	}
+
+	if len(params) == 0 {
+		return sendRequest(g, api, params)
+	}
+
+	// // 显示参数编辑表并填充参数数据
+	// if err := ShowParamsEditForm(g, v); err != nil {
+	// 	return err
+	// }
+
+	// // 填充参数数据
+	// if paramsView, err := g.View("form-params"); err == nil {
+	// 	paramsView.Clear()
+	// 	paramsData, _ := json.MarshalIndent(params, "", "  ")
+	// 	fmt.Fprint(paramsView, string(paramsData))
+	// }
+
+
+	// // 绑定键盘操作 'r' 发送请求
+	// if err := g.SetKeybinding("form-params", 'r', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+	// 	paramsView, _ := g.View("form-params")
+	// 	paramsData := strings.TrimSpace(paramsView.Buffer())
+
+	// 	// 解析参数数据为json
+	// 	json.Unmarshal([]byte(paramsData), &params)
+	// 	return sendRequest(g, api, params)
+	// }); err != nil {
+	// 	return err
+	// }
+
+	return nil
+}
+
+func ShowParamsEditForm(g *gocui.Gui, v *gocui.View) error {
+	common.FormInfo.Active = true
+	maxX, maxY := g.Size()
+	common.FormInfo.CurrentField = 0 // 重置当前字段为第一个
+
+	// 创建表单容器
+	if v, err := g.SetView("form", maxX/3, maxY/3, maxX*2/3, maxY*2/3); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Wrap = true
+    	v.Title = "编辑参数"
+		v.Editable = false
+	}
+
+	// 创建参数字段
+	fieldName := "form-params"
+	if fieldView, err := g.SetView(fieldName, maxX/3+1, maxY/3+2, maxX*2/3-1, maxY*2/3-2); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		fieldView.Title = "Params"
+		fieldView.Editable = true
+		fieldView.Wrap = true
+
+		// 添加键绑定
+		if err := g.SetKeybinding(fieldName, gocui.KeyTab, gocui.ModNone, NextFormField); err != nil {
+			return err
+		}
+		if err := g.SetKeybinding(fieldName, gocui.KeyEsc, gocui.ModNone, CloseForm); err != nil {
+			return err
+		}
+	}
+
+	// 确保表单及其所有字段保持在最顶层
+	g.SetViewOnTop("form")
+	g.SetViewOnTop(fieldName)
+
+	// 设置初始焦点到参数字段
+	if _, err := ui.SetCurrentViewOnTop(g, fieldName); err != nil {
+		return err
+	}
+
+	g.Cursor = true
+
+	return nil
+}
+
+func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) error {
+	client := resty.New()
+
+	resp, err := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(params).
+		Execute(strings.ToUpper(api.Method), api.Path)
+
+	if err != nil {
+		return err
+	}
+
+	respBody := resp.Body()
+
+	bottomView, _ := g.View("right-bottom")
+	fmt.Fprint(bottomView, string(respBody))
 
 	return nil
 }

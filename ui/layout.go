@@ -55,7 +55,7 @@ func Layout(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		v.Title = "响应定义"
+		v.Title = "响应展示"
 		v.Editable = false
 		v.Wrap = true
 	}
