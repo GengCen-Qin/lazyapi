@@ -33,7 +33,11 @@ func main() {
 
 	// 使用Update方法确保在GUI完全初始化后更新API列表
 	g.Update(func(g *gocui.Gui) error {
-		forms.UpdateAPIList(g)
+		list := models.APIList()
+		if len(list) != 0 {
+			models.SelectedAPI = list[0].Id
+		}
+ 		forms.UpdateAPIList(g)
 		return nil
 	})
 

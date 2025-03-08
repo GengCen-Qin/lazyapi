@@ -561,6 +561,7 @@ func ConfirmDeleteAPI(g *gocui.Gui, v *gocui.View) error {
 	// 清除确认提示
 	statusView, _ := g.View("status")
 	statusView.Clear()
+	fmt.Fprint(statusView, "delete success !!!")
 
 	// 删除临时键绑定
 	g.DeleteKeybinding("", 'y', gocui.ModNone)
