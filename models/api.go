@@ -3,10 +3,12 @@ package models
 import (
 	"encoding/json"
 	"log"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // API 表示一个API接口的数据结构
 type API struct {
+	Id     int    `json:"id"`     // API ID
 	Name   string `json:"name"`   // API名称
 	Path   string `json:"path"`   // API路径
 	Method string `json:"method"` // HTTP方法
@@ -16,12 +18,30 @@ type API struct {
 // NewAPI 创建一个新API
 func NewAPI(name, path, method string, params string) *API {
 	params = formatJSON(params)
-	return &API{
+    
+    api := &API{
 		Name:   name,
 		Path:   path,
 		Method: method,
 		Params: params,
 	}
+
+    InsertAPI(api)
+
+	return api
+}
+
+func EditAPI(id int, name, path, method string, params string) *API {
+	params = formatJSON(params)
+
+	api, _ := FindAPI(id)
+	api.Name = name
+	api.Path = path
+	api.Method = method
+	api.Params = params
+	UpdateAPI(api)
+
+	return api
 }
 
 func formatJSON(jsonString string) string {
@@ -52,6 +72,9 @@ func (a *API) GetParams() (map[string]interface{}, error) {
 	return params, nil
 }
 
-// APIList 存储所有API
-var APIList []*API
+func APIList() ([]API) {
+    apis, _ := getAllAPIs()
+	return apis
+}
+
 var SelectedAPI int = -1

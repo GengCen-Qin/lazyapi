@@ -3,14 +3,15 @@ package forms
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 
 	"lazyapi/common"
 	"lazyapi/models"
 	"lazyapi/ui"
 
-	"github.com/jroimartin/gocui"
 	"github.com/go-resty/resty/v2"
+	"github.com/jroimartin/gocui"
 )
 
 // ShowNewAPIForm 显示新建API表单
@@ -71,7 +72,7 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 			fmt.Fprint(fieldView, "{}")
 		}
 		if field == "path" {
-			fmt.Fprint(fieldView, "http://www.baidu.com")
+			fmt.Fprint(fieldView, "http://")
 		}
 
 		// 为每个字段添加键绑定
@@ -180,15 +181,16 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 
 	// 如果是编辑模式，更新现有API
 	if common.FormInfo.IsEditing {
-		api := models.APIList[models.SelectedAPI]
+		api, _ := models.FindAPI(models.SelectedAPI)
 		api.Name = name
 		api.Path = path
 		api.Method = method
+		api.Params = params
+		models.UpdateAPI(api)
 	} else {
 		// 否则，创建新API并添加到列表
 		newAPI := models.NewAPI(name, path, method, params)
-		models.APIList = append(models.APIList, newAPI)
-		models.SelectedAPI = len(models.APIList) - 1
+		models.SelectedAPI = newAPI.Id
 	}
 
 	// 更新视图
@@ -301,17 +303,31 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// 添加上下键绑定
+	if err := g.SetKeybinding("left", gocui.KeyArrowUp, gocui.ModNone, MoveSelectionUp); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("left", gocui.KeyArrowDown, gocui.ModNone, MoveSelectionDown); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // MoveSelectionUp 向上移动选择
 func MoveSelectionUp(g *gocui.Gui, v *gocui.View) error {
-	if len(models.APIList) == 0 {
+	list := models.APIList()
+	if len(list) == 0 || len(list) == 1 || models.SelectedAPI <= 0 {
 		return nil
 	}
 
-	if models.SelectedAPI > 0 {
-		models.SelectedAPI--
+	index := slices.IndexFunc(list, func(x models.API) bool {
+	    return x.Id == models.SelectedAPI
+	})
+
+	if index != 0 {
+		models.SelectedAPI = list[index-1].Id
 	}
 	UpdateAPIList(g)
 	return nil
@@ -319,41 +335,51 @@ func MoveSelectionUp(g *gocui.Gui, v *gocui.View) error {
 
 // MoveSelectionDown 向下移动选择
 func MoveSelectionDown(g *gocui.Gui, v *gocui.View) error {
-	if len(models.APIList) == 0 {
+	list := models.APIList()
+	if len(list) == 0 || len(list) == 1 {
 		return nil
 	}
 
-	if models.SelectedAPI < len(models.APIList)-1 {
-		models.SelectedAPI++
+	index := slices.IndexFunc(list, func(x models.API) bool {
+	    return x.Id == models.SelectedAPI
+	})
+
+	if index + 1 >= len(list) {
+		return nil
 	}
+
+	models.SelectedAPI = list[index+1].Id
+
 	UpdateAPIList(g)
 	return nil
 }
 
 // UpdateAPIList 更新左侧API列表显示
 func UpdateAPIList(g *gocui.Gui) {
-	leftView, _ := g.View("left")
+	leftView, leftViewError := g.View("left")
+	if leftViewError != nil {
+		return // 如果视图不存在，直接返回
+	}
 	rightTopView, _ := g.View("right-top")
-
-	// 清空并重新渲染左侧视图
+	list := models.APIList()
 	leftView.Clear()
-	for i, api := range models.APIList {
-		if i == models.SelectedAPI {
+	for _, api := range list {
+		if api.Id == models.SelectedAPI {
 			fmt.Fprintf(leftView, "> %s [%s] \n", api.Name, api.Method)
 		} else {
 			fmt.Fprintf(leftView, "  %s [%s] \n", api.Name, api.Method)
 		}
 	}
 
-	// 设置光标位置
-	if models.SelectedAPI >= 0 {
-		leftView.SetCursor(0, models.SelectedAPI)
-	}
+	index := slices.IndexFunc(list, func(x models.API) bool {
+	    return x.Id == models.SelectedAPI
+	})
 
-	// 更新右上视图的内容
 	rightTopView.Clear()
-	if models.SelectedAPI >= 0 && models.SelectedAPI < len(models.APIList) {
-		api := models.APIList[models.SelectedAPI]
+
+	if models.SelectedAPI != -1 {
+		leftView.SetCursor(0, index)
+		api, _ := models.FindAPI(models.SelectedAPI)
 		fmt.Fprintf(rightTopView, "NAME: %s \t METHOD: %s\n", api.Name, api.Method)
 		fmt.Fprintf(rightTopView, "PATH: %s\n", api.Path)
 		fmt.Fprintf(rightTopView, "Params: \n%s\n", api.Params)
@@ -363,44 +389,50 @@ func UpdateAPIList(g *gocui.Gui) {
 }
 
 func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
-	if len(models.APIList) == 0 || models.SelectedAPI < 0 || models.SelectedAPI >= len(models.APIList) {
+	if models.SelectedAPI == -1 {
 		return nil
 	}
 
 	// 标记为编辑模式
 	common.FormInfo.IsEditing = true
 
-	// 获取当前选中的API
-	api := models.APIList[models.SelectedAPI]
-
 	// 显示表单并填充数据
 	if err := ShowNewAPIForm(g, v); err != nil {
 		return err
 	}
 
-	// 填充表单字段
-	if nameView, err := g.View("form-name"); err == nil {
-		nameView.Clear()
-		fmt.Fprint(nameView, api.Name)
-	}
-	if pathView, err := g.View("form-path"); err == nil {
-		pathView.Clear()
-		fmt.Fprint(pathView, api.Path)
-	}
-	if methodView, err := g.View("form-method"); err == nil {
-		methodView.Clear()
-		fmt.Fprint(methodView, api.Method)
-	}
-	if methodView, err := g.View("form-params"); err == nil {
-		methodView.Clear()
-		fmt.Fprint(methodView, api.Params)
-	}
+	// 获取当前选中的API
+	api, _ := models.FindAPI(models.SelectedAPI)
+
+	fillFormFields(g, api)
 	return nil
+}
+
+func fillFormFields(g *gocui.Gui, api * models.API) error {
+    // 定义要填充的字段映射
+    fields := map[string]string{
+        "form-name":   api.Name,
+        "form-path":   api.Path,
+        "form-method": api.Method,
+        "form-params": api.Params,
+    }
+
+    // 统一处理所有字段
+    for viewName, value := range fields {
+        view, err := g.View(viewName)
+        if err != nil {
+            continue // 或者返回错误：return fmt.Errorf("无法获取视图 %s: %v", viewName, err)
+        }
+        view.Clear()
+        fmt.Fprint(view, value)
+    }
+
+    return nil
 }
 
 // DeleteAPI 删除选中的API
 func DeleteAPI(g *gocui.Gui, v *gocui.View) error {
-	if len(models.APIList) == 0 || models.SelectedAPI < 0 || models.SelectedAPI >= len(models.APIList) {
+	if models.SelectedAPI == -1 {
 		return nil
 	}
 
@@ -423,22 +455,19 @@ func DeleteAPI(g *gocui.Gui, v *gocui.View) error {
 }
 
 func RequestAPI(g *gocui.Gui, v *gocui.View) error {
-	if len(models.APIList) == 0 || models.SelectedAPI < 0 || models.SelectedAPI >= len(models.APIList) {
+	if models.SelectedAPI == -1 {
 		return nil
 	}
 
-	api := models.APIList[models.SelectedAPI]
-
+	api, _ := models.FindAPI(models.SelectedAPI)
 	params, err := api.GetParams()
 	if err != nil {
-		return err // or handle error appropriately
+		return err
 	}
 
 	if len(params) == 0 {
-		// 没有参数直接请求
 		return sendRequest(g, api, params)
 	}
-
 
 	// 创建新的view来展示和编辑params
 	maxX, maxY := g.Size()
@@ -517,15 +546,13 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 
 // ConfirmDeleteAPI 确认删除API
 func ConfirmDeleteAPI(g *gocui.Gui, v *gocui.View) error {
-	// 删除选中的API
-	models.APIList = append(models.APIList[:models.SelectedAPI], models.APIList[models.SelectedAPI+1:]...)
+	models.DeleteAPI(models.SelectedAPI)
 
-	// 如果删除后列表为空，重置选中索引
-	if len(models.APIList) == 0 {
+    list := models.APIList()
+	if len(list) == 0 {
 		models.SelectedAPI = -1
-	} else if models.SelectedAPI >= len(models.APIList) {
-		// 如果删除的是最后一个API，选中前一个
-		models.SelectedAPI = len(models.APIList) - 1
+	} else {
+		models.SelectedAPI = list[len(list)-1].Id
 	}
 
 	// 更新视图
