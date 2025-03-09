@@ -524,13 +524,32 @@ func RequestAPI(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func mapToStringMap(params map[string]interface{}) map[string]string {
+    stringMap := make(map[string]string)
+
+    for k, v := range params {
+        stringMap[k] = fmt.Sprint(v)
+    }
+
+    return stringMap
+}
+
 func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) error {
 	client := resty.New()
 
-	resp, err := client.R().
-		SetHeader("Content-Type", "application/json").
-		SetBody(params).
-		Execute(strings.ToUpper(api.Method), api.Path)
+	request := client.R().
+    SetHeader("Content-Type", "application/json")
+
+	method := strings.ToUpper(api.Method)
+	if method == "GET" {
+	    // 对于GET请求，将参数设置为查询参数
+	    request.SetQueryParams(mapToStringMap(params))
+	} else {
+	    // 对于其他请求(POST, PUT等)，将参数设置为请求体
+	    request.SetBody(params)
+	}
+
+	resp, err := request.Execute(method, api.Path)
 
 	if err != nil {
 		return err
