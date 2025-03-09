@@ -61,15 +61,45 @@ func Layout(g *gocui.Gui) error {
 		v.Title = "响应展示"
 		v.Editable = false
 		v.Wrap = true
+		v.Autoscroll = false
 	}
 
 	if err := g.SetKeybinding("right-bottom", 'y', gocui.ModNone, copyResponseToClipboard); err != nil {
 		return err
 	}
 
+ 	// 为right-bottom视图添加上下键滚动的键绑定
+    if err := g.SetKeybinding("right-bottom", gocui.KeyArrowUp, gocui.ModNone, scrollViewUp); err != nil {
+        return err
+    }
+    if err := g.SetKeybinding("right-bottom", gocui.KeyArrowDown, gocui.ModNone, scrollViewDown); err != nil {
+        return err
+    }
+
 	return nil
 }
 
+// 向上滚动视图
+func scrollViewUp(g *gocui.Gui, v *gocui.View) error {
+    scrollView(v, -1)
+    return nil
+}
+
+// 向下滚动视图
+func scrollViewDown(g *gocui.Gui, v *gocui.View) error {
+    scrollView(v, 1)
+    return nil
+}
+
+// 滚动视图的辅助函数
+func scrollView(v *gocui.View, dy int) {
+    if v != nil {
+        ox, oy := v.Origin()
+        if oy+dy >= 0 {  // 防止滚动到负位置
+            v.SetOrigin(ox, oy+dy)
+        }
+    }
+}
 
 func copyResponseToClipboard(g *gocui.Gui, v *gocui.View) error {
     if v == nil {
@@ -90,7 +120,7 @@ func copyResponseToClipboard(g *gocui.Gui, v *gocui.View) error {
         return err
     }
 
-	statusView, _ := g.View("status") 
+	statusView, _ := g.View("status")
     statusView.Clear()
     fmt.Fprint(statusView, "响应内容已复制到剪贴板")
 
