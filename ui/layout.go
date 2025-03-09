@@ -1,7 +1,10 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/GengCen-Qin/gocui"
+	"github.com/atotto/clipboard"
 )
 
 // Layout 管理GUI布局
@@ -60,5 +63,36 @@ func Layout(g *gocui.Gui) error {
 		v.Wrap = true
 	}
 
+	if err := g.SetKeybinding("right-bottom", 'y', gocui.ModNone, copyResponseToClipboard); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+
+func copyResponseToClipboard(g *gocui.Gui, v *gocui.View) error {
+    if v == nil {
+        return nil
+    }
+
+    // 获取right-bottom视图
+    responseView, err := g.View("right-bottom")
+    if err != nil {
+        return err
+    }
+
+    // 获取视图中的所有内容
+    responseContent := responseView.Buffer()
+    // 复制到剪贴板
+    err = clipboard.WriteAll(responseContent)
+    if err != nil {
+        return err
+    }
+
+	statusView, _ := g.View("status") 
+    statusView.Clear()
+    fmt.Fprint(statusView, "响应内容已复制到剪贴板")
+
+    return nil
 }

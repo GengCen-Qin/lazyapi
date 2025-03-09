@@ -35,7 +35,7 @@ var (
 	StatusMessages = map[string]string{
 		"left":         "API_LIST | n(new), e(edit), d(delete), space(jump detail)",
 		"right-top":    "REQUEST_DEFINITION | r(request)",
-		"right-bottom": "RESPOND_RESULT",
+		"right-bottom": "RESPOND_RESULT | y(yank content)",
 		"requestConfirmView": "ctrl-r(confirm), ctrl-q(cancel)",
 	}
 )
