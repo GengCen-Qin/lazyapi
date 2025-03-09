@@ -146,6 +146,7 @@ func CloseForm(g *gocui.Gui, v *gocui.View) error {
 	if _, err := ui.SetCurrentViewOnTop(g, "left"); err != nil {
 		return err
 	}
+	common.Active = 0
 	common.FormInfo.Active = false
 	g.Cursor = false
 	return nil
