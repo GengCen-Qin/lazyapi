@@ -583,14 +583,15 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 
 	resp, err := request.Execute(method, api.Path)
 
+	bottomView, _ := g.View("right-bottom")
+	bottomView.Clear()
+
 	if err != nil {
-		return err
+		fmt.Fprint(bottomView, "请求失败", err)
 	}
 
 	respBody := resp.Body()
 
-	bottomView, _ := g.View("right-bottom")
-	bottomView.Clear()
 	fmt.Fprint(bottomView, string(respBody))
 
 	return nil
