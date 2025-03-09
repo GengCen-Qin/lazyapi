@@ -1,7 +1,7 @@
 package ui
 
 import (
-	"github.com/jroimartin/gocui"
+	"github.com/GengCen-Qin/gocui"
 )
 
 // Quit 退出程序

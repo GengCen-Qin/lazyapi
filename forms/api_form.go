@@ -11,7 +11,7 @@ import (
 	"lazyapi/ui"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/jroimartin/gocui"
+	"github.com/GengCen-Qin/gocui"
 )
 
 // ShowNewAPIForm 显示新建API表单
@@ -367,7 +367,8 @@ func UpdateAPIList(g *gocui.Gui) {
 		if api.Id == models.SelectedAPI {
 			fmt.Fprintf(leftView, "> %s [%s] \n", api.Name, api.Method)
 		} else {
-			fmt.Fprintf(leftView, "  %s [%s] \n", api.Name, api.Method)
+			// 文字颜色控制
+			fmt.Fprintf(leftView, "  %s [\033[31;1m%s\033[0m] \n", api.Name, api.Method)
 		}
 	}
 

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/jroimartin/gocui"
+	"github.com/GengCen-Qin/gocui"
 	"lazyapi/forms"
 	"lazyapi/ui"
 	"lazyapi/models"

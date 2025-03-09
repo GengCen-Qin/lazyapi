@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/jroimartin/gocui"
+	"github.com/GengCen-Qin/gocui"
 	"lazyapi/common"
 )
 
