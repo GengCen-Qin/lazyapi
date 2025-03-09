@@ -298,6 +298,11 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	// 列表选中API，跳入详情View
+	if err := g.SetKeybinding("left", gocui.KeySpace, gocui.ModNone, JumpDetailView); err != nil {
+		return err
+	}
+
 	// 右上视图键绑定 - 'r'键请求当前API
 	if err := g.SetKeybinding("right-top", 'r', gocui.ModNone, RequestAPI); err != nil {
 		return err
@@ -455,6 +460,17 @@ func DeleteAPI(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func JumpDetailView(g *gocui.Gui, v *gocui.View) error {
+    index := slices.IndexFunc(common.ViewArr, func(x string) bool {
+		return x == "right-top"
+	})
+	if _, err := ui.SetCurrentViewOnTop(g, "right-top"); err != nil {
+		return err
+	}
+	common.Active = index
+	return nil
+}
+
 func RequestAPI(g *gocui.Gui, v *gocui.View) error {
 	if models.SelectedAPI == -1 {
 		return nil
@@ -478,25 +494,28 @@ func RequestAPI(g *gocui.Gui, v *gocui.View) error {
 	top := maxY/2 - viewHeight/2
 	bottom := maxY/2 + viewHeight/2
 
-	pv, err := g.SetView("paramView", left, top, right, bottom)
+	pv, err := g.SetView("requestConfirmView", left, top, right, bottom)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		pv.Title = "编辑请求参数"
+		pv.Title = "确认请求参数(可编辑)"
 		pv.Editable = true
 		pv.Wrap = true
-		g.SetCurrentView("paramView")
+		g.SetCurrentView("requestConfirmView")
 		g.Cursor = true
+
+		status_view, _ := g.View("status")
+		status_view.Clear()
+		fmt.Fprint(status_view, common.StatusMessages["requestConfirmView"])
 
 		// 在 view 中显示默认的 params
 		fmt.Fprintln(pv, api.Params)
 
-		// 绑定 'r' 事件到函数，发送请求
-		g.SetKeybinding("paramView", 'r', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		g.SetKeybinding("requestConfirmView", gocui.KeyCtrlR, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 			// 从 view 获取输入的 params
-			pv, _ := g.View("paramView")
+			pv, _ := g.View("requestConfirmView")
 			inputParams := pv.Buffer()
 			var inputParamsMap map[string]interface{}
 			jsonErr := json.Unmarshal([]byte(inputParams), &inputParamsMap)
@@ -506,18 +525,31 @@ func RequestAPI(g *gocui.Gui, v *gocui.View) error {
 			// 发送请求
 			err := sendRequest(g, api, inputParamsMap)
 
-			// Remove the paramView and associated keybindings after the request
-			if err := g.DeleteView("paramView"); err != nil {
+			// Remove the requestConfirmView and associated keybindings after the request
+			if err := g.DeleteView("requestConfirmView"); err != nil {
 				return err
 			}
 
 			// Remove keybindings
-			if err := g.DeleteKeybinding("paramView", 'r', gocui.ModNone); err != nil {
+			if err := g.DeleteKeybinding("requestConfirmView", gocui.KeyCtrlR, gocui.ModNone); err != nil {
 				return err
         	}
 
             g.Cursor = false
+
+            status_view.Clear()
+            fmt.Fprint(status_view, "request success")
+
 			return err
+		})
+
+		g.SetKeybinding("requestConfirmView", gocui.KeyCtrlQ, gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+			status_view.Clear()
+            fmt.Fprint(status_view, "request cancel")
+			g.DeleteView("requestConfirmView")
+		 	g.DeleteKeybinding("requestConfirmView", gocui.KeyCtrlQ, gocui.ModNone)
+            g.Cursor = false
+			return nil
 		})
 	}
 
