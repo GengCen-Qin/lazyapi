@@ -3,6 +3,7 @@ package models
 import (
 	"database/sql"
 	"log"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -15,12 +16,12 @@ func init() {
     if err != nil {
         log.Fatal(err)
     }
-    
+
     // 测试连接是否有效
     if err = db.Ping(); err != nil {
         log.Fatal(err)
     }
-    
+
     err = initDB(db)
     if err != nil {
         log.Fatal(err)
@@ -46,6 +47,16 @@ func initDB(db *sql.DB) error {
         path TEXT NOT NULL,
         method TEXT NOT NULL,
         params TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS request_records (
+        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        path TEXT NOT NULL,
+        method TEXT NOT NULL,
+        params TEXT NOT NULL,
+        respond TEXT NOT NULL,
+        request_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
     `
     _, err := db.Exec(query)
@@ -76,6 +87,21 @@ func InsertAPI(api *API) error {
     return nil
 }
 
+func InsertRequestRecord(api *API, params string, respond string) error {
+    db := GetDB()
+    stmt, err := db.Prepare("INSERT INTO request_records(name, path, method, params, respond) values(?, ?, ?, ?, ?)")
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
+    _, err = stmt.Exec(api.Name, api.Path, api.Method, params, respond)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
 func UpdateAPI(api *API) error {
 	db := GetDB()
     stmt, err := db.Prepare("UPDATE apis SET name=?, path=?, method=?, params=? WHERE id=?")
@@ -83,12 +109,12 @@ func UpdateAPI(api *API) error {
         return err
     }
     defer stmt.Close()
-    
+
     _, err = stmt.Exec(api.Name, api.Path, api.Method, api.Params, api.Id)
     if err != nil {
         return err
     }
-    
+
     return nil
 }
 
@@ -99,12 +125,12 @@ func DeleteAPI(id int) error {
         return err
     }
     defer stmt.Close()
-    
+
     _, err = stmt.Exec(id)
     if err != nil {
         return err
     }
-    
+
     return nil
 }
 
@@ -115,7 +141,7 @@ func FindAPI(id int) (*API, error) {
         return nil, err
     }
     defer stmt.Close()
-    
+
     var api API
     err = stmt.QueryRow(id).Scan(&api.Id, &api.Name, &api.Path, &api.Method, &api.Params)
     if err != nil {
@@ -124,7 +150,7 @@ func FindAPI(id int) (*API, error) {
         }
         return nil, err
     }
-    
+
     return &api, nil
 }
 
@@ -145,4 +171,24 @@ func getAllAPIs() ([]API, error) {
         apis = append(apis, api)
     }
     return apis, nil
+}
+
+func getAllRequestRecords() ([]RequestRecord, error) {
+    db := GetDB()
+    rows, err := db.Query("SELECT id, name, path, method, params, respond, request_time FROM request_records")
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+
+    var list []RequestRecord
+    for rows.Next() {
+
+        var request_record RequestRecord
+        if err := rows.Scan(&request_record.Id, &request_record.Name, &request_record.Path, &request_record.Method, &request_record.Params, &request_record.Respond, &request_record.RequestTime); err != nil {
+            return nil, err
+        }
+        list = append(list, request_record)
+    }
+    return list, nil
 }

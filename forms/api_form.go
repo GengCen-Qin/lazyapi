@@ -395,6 +395,21 @@ func UpdateAPIList(g *gocui.Gui) {
 	}
 }
 
+func RefreshRequestRecordList(g *gocui.Gui) {
+	view, _ := g.View("request-history")
+
+	list := models.RequestRecordList()
+
+	view.Clear()
+	for _, record := range list {
+		if record.Id == models.SelectedQuestRecord {
+			fmt.Fprintf(view, "> \033[34;1m%s\033[0m [\033[31;1m%s\033[0m] \n", record.Name, record.Method)
+		} else {
+			fmt.Fprintf(view, "  \033[34;1m%s\033[0m [\033[31;1m%s\033[0m] \n", record.Name, record.Method)
+		}
+	}
+}
+
 func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
 	if models.SelectedAPI == -1 {
 		return nil
@@ -567,6 +582,19 @@ func mapToStringMap(params map[string]interface{}) map[string]string {
     return stringMap
 }
 
+func MapToJSONString(params map[string]interface{}) (string, error) {
+    // Marshal the map into JSON bytes
+    jsonBytes, err := json.Marshal(params)
+    if err != nil {
+        return "", fmt.Errorf("error marshaling map to JSON: %w", err)
+    }
+
+    // Convert bytes to string
+    jsonString := string(jsonBytes)
+
+    return jsonString, nil
+}
+
 func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) error {
 	client := resty.New()
 
@@ -587,14 +615,18 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 	bottomView, _ := g.View("right-bottom")
 	bottomView.Clear()
 
+	json_params, _ := MapToJSONString(params)
+
 	if err != nil {
+		models.InsertRequestRecord(api, json_params, err.Error())
 		fmt.Fprint(bottomView, "请求失败", err)
 	}
 
 	respBody := resp.Body()
-
+	models.InsertRequestRecord(api, json_params, string(respBody))
 	fmt.Fprint(bottomView, string(respBody))
 
+	RefreshRequestRecordList(g)
 	return nil
 }
 

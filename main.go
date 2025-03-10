@@ -38,6 +38,7 @@ func main() {
 			models.SelectedAPI = list[0].Id
 		}
  		forms.UpdateAPIList(g)
+   		forms.RefreshRequestRecordList(g)
 		return nil
 	})
 

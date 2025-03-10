@@ -25,8 +25,11 @@ func Layout(g *gocui.Gui) error {
 	// 左边视图占宽度的 1/5 (20%)
 	leftWidth := int(float64(maxX) * 0.2)
 
-	// 左边视图: 占整个高度，宽度为 1/5
-	if v, err := g.SetView("left", 0, 0, leftWidth-1, maxY-2); err != nil {
+	// 计算左侧API列表的高度 - 占左侧总高度的70%
+	leftApiHeight := int(float64(maxY-2) * 0.7)
+
+	// 左上视图: API列表 - 占左侧宽度，高度为总高度的70%
+	if v, err := g.SetView("left", 0, 0, leftWidth-1, leftApiHeight); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -40,6 +43,17 @@ func Layout(g *gocui.Gui) error {
 		if _, err = SetCurrentViewOnTop(g, "left"); err != nil {
 			return err
 		}
+	}
+
+	// 左下视图: 请求记录列表 - 占左侧宽度，高度为剩余的30%
+	if v, err := g.SetView("request-history", 0, leftApiHeight+1, leftWidth-1, maxY-2); err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Title = "请求记录"
+		v.Wrap = true
+		v.Highlight = true
+		v.Editable = false
 	}
 
 	// 右上视图: 宽度 4/5，高度为 1/2

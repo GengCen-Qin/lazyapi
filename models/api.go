@@ -18,7 +18,7 @@ type API struct {
 // NewAPI 创建一个新API
 func NewAPI(name, path, method string, params string) *API {
 	params = formatJSON(params)
-    
+
     api := &API{
 		Name:   name,
 		Path:   path,
@@ -77,4 +77,10 @@ func APIList() ([]API) {
 	return apis
 }
 
+func RequestRecordList() ([]RequestRecord) {
+	records, _ := getAllRequestRecords()
+	return records
+}
+
 var SelectedAPI int = -1
+var SelectedQuestRecord int = -1
