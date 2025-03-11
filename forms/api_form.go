@@ -404,10 +404,10 @@ func RefreshRequestRecordList(g *gocui.Gui) {
 	for _, record := range list {
 		if record.Id == models.SelectedQuestRecord {
 		    fmt.Fprintf(view, ">\033[34;1m%s\033[0m [\033[a31;1m%s\033[0m] \n",
-		                record.RequestTime.Format("2006-01-02 15:04:05"), record.Path)
+		                record.RequestTime.Local().Format("2006-01-02 15:04:05"), record.Path)
 		} else {
 		    fmt.Fprintf(view, " \033[34;1m%s\033[0m [\033[31;1m%s\033[0m] \n",
-		                record.RequestTime.Format("2006-01-02 15:04:05"), record.Path)
+		                record.RequestTime.Local().Format("2006-01-02 15:04:05"), record.Path)
 		}
 	}
 }
@@ -621,12 +621,12 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 
 	if err != nil {
 		models.InsertRequestRecord(api, json_params, err.Error())
-		fmt.Fprint(bottomView, "请求失败", err)
+		fmt.Fprint(bottomView, "请求失败: ", err)
+	} else {
+		respBody := resp.Body()
+		models.InsertRequestRecord(api, json_params, string(respBody))
+		fmt.Fprint(bottomView, string(respBody))
 	}
-
-	respBody := resp.Body()
-	models.InsertRequestRecord(api, json_params, string(respBody))
-	fmt.Fprint(bottomView, string(respBody))
 
 	RefreshRequestRecordList(g)
 	return nil
