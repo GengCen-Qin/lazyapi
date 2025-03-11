@@ -22,8 +22,8 @@ func Layout(g *gocui.Gui) error {
 		v.FgColor = gocui.ColorBlue // 设置前景色
 	}
 
-	// 左边视图占宽度的 1/5 (20%)
-	leftWidth := int(float64(maxX) * 0.2)
+	// 左边视图占宽度的 1/3 (33.3%)
+	leftWidth := int(float64(maxX) * 0.333)
 
 	// 计算左侧API列表的高度 - 占左侧总高度的70%
 	leftApiHeight := int(float64(maxY-2) * 0.7)
@@ -51,8 +51,8 @@ func Layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Title = "请求记录"
-		v.Wrap = true
-		v.Highlight = true
+		// v.Wrap = true
+		// v.Highlight = true
 		v.Editable = false
 	}
 

@@ -387,9 +387,9 @@ func UpdateAPIList(g *gocui.Gui) {
 	if models.SelectedAPI != -1 {
 		leftView.SetCursor(0, index)
 		api, _ := models.FindAPI(models.SelectedAPI)
-		fmt.Fprintf(rightTopView, "NAME: %s \t METHOD: %s\n", api.Name, api.Method)
-		fmt.Fprintf(rightTopView, "PATH: %s\n", api.Path)
-		fmt.Fprintf(rightTopView, "Params: \n%s\n", api.Params)
+		fmt.Fprintf(rightTopView, "\033[34;1mName\033[0m: %s \t \033[34;1mMethod\033[0m: %s\n",api.Name, api.Method)
+		fmt.Fprintf(rightTopView, "\033[34;1mPath\033[0m: %s\n", api.Path)
+		fmt.Fprintf(rightTopView, "\033[34;1mParams\033[0m: \n%s\n", api.Params)
 	} else {
 		fmt.Fprint(rightTopView, "EMPTY API")
 	}
@@ -403,9 +403,11 @@ func RefreshRequestRecordList(g *gocui.Gui) {
 	view.Clear()
 	for _, record := range list {
 		if record.Id == models.SelectedQuestRecord {
-			fmt.Fprintf(view, "> \033[34;1m%s\033[0m [\033[31;1m%s\033[0m] \n", record.Name, record.Method)
+		    fmt.Fprintf(view, ">\033[34;1m%s\033[0m [\033[a31;1m%s\033[0m] \n",
+		                record.RequestTime.Format("2006-01-02 15:04:05"), record.Path)
 		} else {
-			fmt.Fprintf(view, "  \033[34;1m%s\033[0m [\033[31;1m%s\033[0m] \n", record.Name, record.Method)
+		    fmt.Fprintf(view, " \033[34;1m%s\033[0m [\033[31;1m%s\033[0m] \n",
+		                record.RequestTime.Format("2006-01-02 15:04:05"), record.Path)
 		}
 	}
 }
