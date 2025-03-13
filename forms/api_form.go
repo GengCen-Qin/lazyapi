@@ -539,7 +539,10 @@ func RequestAPI(g *gocui.Gui, v *gocui.View) error {
 			var inputParamsMap map[string]interface{}
 			jsonErr := json.Unmarshal([]byte(inputParams), &inputParamsMap)
 			if jsonErr != nil {
-				return jsonErr // handle error appropriately
+				statusView, _ := g.View("status")
+				statusView.Clear()
+				fmt.Fprintf(statusView, "\033[31;1m%s\033[0m", "params must be a json!!!")
+				return nil
 			}
 			// 发送请求
 			err := sendRequest(g, api, inputParamsMap)

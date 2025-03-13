@@ -18,7 +18,10 @@ func GlobleSetupKeybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, Quit); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone, NextView); err != nil {
+	if err := g.SetKeybinding("left", gocui.KeyTab, gocui.ModNone, NextView); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("request-history", gocui.KeyTab, gocui.ModNone, NextView); err != nil {
 		return err
 	}
 	if err := g.SetKeybinding("left", 'y', gocui.ModNone, copyResponseToClipboard); err != nil {
