@@ -305,7 +305,7 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 	}
 
 	// 右上视图键绑定 - 'r'键请求当前API
-	if err := g.SetKeybinding("right-top", 'r', gocui.ModNone, RequestAPI); err != nil {
+	if err := g.SetKeybinding("left", 'r', gocui.ModNone, RequestAPI); err != nil {
 		return err
 	}
 

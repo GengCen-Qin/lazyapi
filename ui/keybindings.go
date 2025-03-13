@@ -9,8 +9,8 @@ func Quit(g *gocui.Gui, v *gocui.View) error {
 	return gocui.ErrQuit
 }
 
-// SetupKeybindings 设置键盘绑定
-func SetupKeybindings(g *gocui.Gui) error {
+// GlobleSetupKeybindings 设置键盘绑定
+func GlobleSetupKeybindings(g *gocui.Gui) error {
 	// 全局键绑定
 	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone, Quit); err != nil {
 		return err
@@ -28,7 +28,7 @@ func Initialize(g *gocui.Gui) error {
 	g.SetManagerFunc(Layout)
 
 	// 设置键盘绑定
-	if err := SetupKeybindings(g); err != nil {
+	if err := GlobleSetupKeybindings(g); err != nil {
 		return err
 	}
 
