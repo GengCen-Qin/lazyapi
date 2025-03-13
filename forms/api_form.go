@@ -634,6 +634,7 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 	}
 
 	RefreshRequestRecordList(g)
+	g.SetCurrentView("left")
 	return nil
 }
 
