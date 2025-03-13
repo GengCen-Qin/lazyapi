@@ -1,7 +1,10 @@
 package ui
 
 import (
+	// "strings"
+
 	"github.com/GengCen-Qin/gocui"
+	"lazyapi/utils"
 )
 
 // Quit 退出程序
@@ -18,6 +21,15 @@ func GlobleSetupKeybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone, NextView); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("left", 'y', gocui.ModNone, copyResponseToClipboard); err != nil {
+		return err
+	}
+    if err := g.SetKeybinding("left", gocui.KeyCtrlLsqBracket, gocui.ModNone, utils.ScrollViewUp); err != nil {
+        return err
+    }
+    if err := g.SetKeybinding("left", gocui.KeyCtrlRsqBracket, gocui.ModNone, utils.ScrollViewDown); err != nil {
+        return err
+    }
 
 	return nil
 }

@@ -9,6 +9,7 @@ import (
 	"lazyapi/common"
 	"lazyapi/models"
 	"lazyapi/ui"
+	"lazyapi/utils"
 
 	"github.com/go-resty/resty/v2"
 	"github.com/GengCen-Qin/gocui"
@@ -616,6 +617,7 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 
 	bottomView, _ := g.View("right-bottom")
 	bottomView.Clear()
+	utils.ResetViewOrigin(bottomView)
 
 	json_params, _ := MapToJSONString(params)
 
