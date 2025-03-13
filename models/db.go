@@ -3,6 +3,9 @@ package models
 import (
 	"database/sql"
 	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -10,9 +13,8 @@ import (
 var db *sql.DB // 全局数据库连接池
 
 func init() {
-	dbPath := "./lazyapi.db"
     var err error
-    db, err = sql.Open("sqlite3", dbPath)
+    db, err = sql.Open("sqlite3", dbPath())
     if err != nil {
         log.Fatal(err)
     }
@@ -26,6 +28,30 @@ func init() {
     if err != nil {
         log.Fatal(err)
     }
+}
+
+func dbPath() string {
+	var dbPath string
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+	    // 如果无法获取用户主目录，则使用当前目录作为备选
+	    dbPath = "./lazyapi.db"
+	} else {
+	    if runtime.GOOS == "darwin" { // Mac系统
+	        // 创建Mac应用支持目录
+	        appSupportDir := filepath.Join(homeDir, "Library", "Application Support", "lazyapi")
+	        if err := os.MkdirAll(appSupportDir, 0755); err != nil {
+	            // 如果无法创建目录，回退到用户主目录
+	            dbPath = filepath.Join(homeDir, "lazyapi.db")
+	        } else {
+	            dbPath = filepath.Join(appSupportDir, "lazyapi.db")
+	        }
+	    } else {
+	        // 其他系统默认放在用户主目录下
+	        dbPath = filepath.Join(homeDir, "lazyapi.db")
+	    }
+	}
+	return dbPath
 }
 
 func CloseDB() {
