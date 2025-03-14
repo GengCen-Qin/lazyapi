@@ -7,7 +7,8 @@ import (
 )
 
 func NewAPI(name, path, method string, params string) *entity.API {
-	params = utils.FormatJSON(params)
+
+	params, _ = utils.FormatJSON(params)
 
     api := &entity.API{
 		Name:   name,
@@ -22,7 +23,7 @@ func NewAPI(name, path, method string, params string) *entity.API {
 }
 
 func EditAPI(id int, name, path, method string, params string) *entity.API {
-	params = utils.FormatJSON(params)
+	params, _ = utils.FormatJSON(params)
 
 	api, _ := db.FindAPI(id)
 	api.Name = name

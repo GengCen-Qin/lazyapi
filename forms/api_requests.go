@@ -157,8 +157,9 @@ func sendRequest(g *gocui.Gui, api *entity.API, params map[string]interface{}) e
 		fmt.Fprint(bottomView, "请求失败: ", err)
 	} else {
 		respBody := resp.Body()
+		format_josn, _ := utils.PrettyPrintJSON(string(respBody))
 		db.InsertRequestRecord(api, json_params, string(respBody))
-		fmt.Fprint(bottomView, string(respBody))
+		fmt.Fprint(bottomView, format_josn)
 	}
 
 	RefreshRequestRecordList(g)

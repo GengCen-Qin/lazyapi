@@ -1,12 +1,14 @@
 package forms
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 
 	"lazyapi/models/db"
 	"lazyapi/models/entity"
 	"lazyapi/models/service"
+	"lazyapi/utils"
 
 	"github.com/GengCen-Qin/gocui"
 )
@@ -38,9 +40,13 @@ func UpdateAPIList(g *gocui.Gui) {
 	if entity.SelectedAPI != -1 {
 		leftView.SetCursor(0, index)
 		api, _ := db.FindAPI(entity.SelectedAPI)
-		fmt.Fprintf(rightTopView, "\033[34;1mName\033[0m: %s \t \033[34;1mMethod\033[0m: %s\n",api.Name, api.Method)
-		fmt.Fprintf(rightTopView, "\033[34;1mPath\033[0m: %s\n", api.Path)
-		fmt.Fprintf(rightTopView, "\033[34;1mParams\033[0m: \n%s\n", api.Params)
+		var buffer bytes.Buffer
+	    format_json, _ := utils.PrettyPrintJSON(api.Params)
+		fmt.Fprintf(&buffer, "\033[34;1mName\033[0m: %s \t \033[34;1mMethod\033[0m: %s\n",api.Name, api.Method)
+		fmt.Fprintf(&buffer, "\033[34;1mPath\033[0m: %s\n", api.Path)
+		fmt.Fprintf(&buffer, "\033[34;1mParams\033[0m: \n%s\n", format_json)
+		fmt.Fprint(rightTopView, buffer.String())
+		rightTopView.SetOrigin(0, 0)
 	} else {
 		fmt.Fprint(rightTopView, "EMPTY API")
 	}
