@@ -8,10 +8,38 @@ import (
 )
 
 // Layout 管理GUI布局
+// 负责创建并定位所有视图
 func Layout(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 
-	// 底部状态栏: 横跨整个宽度
+	// 创建各个主要区域
+	if err := createStatusBar(g, maxX, maxY); err != nil {
+		return err
+	}
+
+	// 左侧视图占宽度的 1/3 (33.3%)
+	leftWidth := int(float64(maxX) * 0.333)
+
+	// 计算左侧API列表的高度 - 占左侧总高度的70%
+	leftApiHeight := int(float64(maxY-2) * 0.7)
+
+	if err := createApiListView(g, leftWidth, leftApiHeight); err != nil {
+		return err
+	}
+
+	if err := createHistoryView(g, leftWidth, leftApiHeight, maxY); err != nil {
+		return err
+	}
+
+	if err := createDetailViews(g, leftWidth, maxX, maxY); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// createStatusBar 创建底部状态栏
+func createStatusBar(g *gocui.Gui, maxX, maxY int) error {
 	if v, err := g.SetView("status", 0, maxY-2, maxX-1, maxY); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -21,14 +49,11 @@ func Layout(g *gocui.Gui) error {
 		v.Editable = false
 		v.FgColor = gocui.ColorBlue // 设置前景色
 	}
+	return nil
+}
 
-	// 左边视图占宽度的 1/3 (33.3%)
-	leftWidth := int(float64(maxX) * 0.333)
-
-	// 计算左侧API列表的高度 - 占左侧总高度的70%
-	leftApiHeight := int(float64(maxY-2) * 0.7)
-
-	// 左上视图: API列表 - 占左侧宽度，高度为总高度的70%
+// createApiListView 创建API列表视图（左上）
+func createApiListView(g *gocui.Gui, leftWidth, leftApiHeight int) error {
 	if v, err := g.SetView("left", 0, 0, leftWidth-1, leftApiHeight); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -44,19 +69,24 @@ func Layout(g *gocui.Gui) error {
 			return err
 		}
 	}
+	return nil
+}
 
-	// 左下视图: 请求记录列表 - 占左侧宽度，高度为剩余的30%
+// createHistoryView 创建请求历史视图（左下）
+func createHistoryView(g *gocui.Gui, leftWidth, leftApiHeight, maxY int) error {
 	if v, err := g.SetView("request-history", 0, leftApiHeight+1, leftWidth-1, maxY-2); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		v.Title = "请求记录"
-		// v.Wrap = true
-		// v.Highlight = true
 		v.Editable = false
 	}
+	return nil
+}
 
-	// 右上视图: 宽度 4/5，高度为 1/2
+// createDetailViews 创建详情视图（右侧）
+func createDetailViews(g *gocui.Gui, leftWidth, maxX, maxY int) error {
+	// 右上视图: 接口定义
 	if v, err := g.SetView("right-top", leftWidth, 0, maxX-1, maxY/2-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -67,7 +97,7 @@ func Layout(g *gocui.Gui) error {
 		v.Editable = false
 	}
 
-	// 右下视图: 宽度 4/5，高度为 1/2
+	// 右下视图: 响应展示
 	if v, err := g.SetView("right-bottom", leftWidth, maxY/2, maxX-1, maxY-2); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -81,7 +111,8 @@ func Layout(g *gocui.Gui) error {
 	return nil
 }
 
-func copyResponseToClipboard(g *gocui.Gui, v *gocui.View) error {
+// CopyResponseToClipboard 复制响应内容到剪贴板
+func CopyResponseToClipboard(g *gocui.Gui, v *gocui.View) error {
     if v == nil {
         return nil
     }
