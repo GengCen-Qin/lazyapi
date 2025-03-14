@@ -7,7 +7,9 @@ import (
 	"strings"
 
 	"lazyapi/common"
-	"lazyapi/models"
+	"lazyapi/models/db"
+	"lazyapi/models/entity"
+	"lazyapi/models/service"
 	"lazyapi/ui"
 	"lazyapi/utils"
 
@@ -183,16 +185,11 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 
 	// 如果是编辑模式，更新现有API
 	if common.FormInfo.IsEditing {
-		api, _ := models.FindAPI(models.SelectedAPI)
-		api.Name = name
-		api.Path = path
-		api.Method = method
-		api.Params = params
-		models.UpdateAPI(api)
+		service.EditAPI(entity.SelectedAPI, name, path, method, params)
 	} else {
 		// 否则，创建新API并添加到列表
-		newAPI := models.NewAPI(name, path, method, params)
-		models.SelectedAPI = newAPI.Id
+		newAPI := service.NewAPI(name, path, method, params)
+		entity.SelectedAPI = newAPI.Id
 	}
 
 	// 更新视图
@@ -324,17 +321,17 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 
 // MoveSelectionUp 向上移动选择
 func MoveSelectionUp(g *gocui.Gui, v *gocui.View) error {
-	list := models.APIList()
-	if len(list) == 0 || len(list) == 1 || models.SelectedAPI <= 0 {
+	list := service.APIList()
+	if len(list) == 0 || len(list) == 1 || entity.SelectedAPI <= 0 {
 		return nil
 	}
 
-	index := slices.IndexFunc(list, func(x models.API) bool {
-	    return x.Id == models.SelectedAPI
+	index := slices.IndexFunc(list, func(x entity.API) bool {
+	    return x.Id == entity.SelectedAPI
 	})
 
 	if index != 0 {
-		models.SelectedAPI = list[index-1].Id
+		entity.SelectedAPI = list[index-1].Id
 	}
 	UpdateAPIList(g)
 	return nil
@@ -342,20 +339,20 @@ func MoveSelectionUp(g *gocui.Gui, v *gocui.View) error {
 
 // MoveSelectionDown 向下移动选择
 func MoveSelectionDown(g *gocui.Gui, v *gocui.View) error {
-	list := models.APIList()
+	list := service.APIList()
 	if len(list) == 0 || len(list) == 1 {
 		return nil
 	}
 
-	index := slices.IndexFunc(list, func(x models.API) bool {
-	    return x.Id == models.SelectedAPI
+	index := slices.IndexFunc(list, func(x entity.API) bool {
+	    return x.Id == entity.SelectedAPI
 	})
 
 	if index + 1 >= len(list) {
 		return nil
 	}
 
-	models.SelectedAPI = list[index+1].Id
+	entity.SelectedAPI = list[index+1].Id
 
 	UpdateAPIList(g)
 	return nil
@@ -368,10 +365,10 @@ func UpdateAPIList(g *gocui.Gui) {
 		return // 如果视图不存在，直接返回
 	}
 	rightTopView, _ := g.View("right-top")
-	list := models.APIList()
+	list := service.APIList()
 	leftView.Clear()
 	for _, api := range list {
-		if api.Id == models.SelectedAPI {
+		if api.Id == entity.SelectedAPI {
 			fmt.Fprintf(leftView, "> %s [%s] \n", api.Name, api.Method)
 		} else {
 			// 文字颜色控制
@@ -379,15 +376,15 @@ func UpdateAPIList(g *gocui.Gui) {
 		}
 	}
 
-	index := slices.IndexFunc(list, func(x models.API) bool {
-	    return x.Id == models.SelectedAPI
+	index := slices.IndexFunc(list, func(x entity.API) bool {
+	    return x.Id == entity.SelectedAPI
 	})
 
 	rightTopView.Clear()
 
-	if models.SelectedAPI != -1 {
+	if entity.SelectedAPI != -1 {
 		leftView.SetCursor(0, index)
-		api, _ := models.FindAPI(models.SelectedAPI)
+		api, _ := db.FindAPI(entity.SelectedAPI)
 		fmt.Fprintf(rightTopView, "\033[34;1mName\033[0m: %s \t \033[34;1mMethod\033[0m: %s\n",api.Name, api.Method)
 		fmt.Fprintf(rightTopView, "\033[34;1mPath\033[0m: %s\n", api.Path)
 		fmt.Fprintf(rightTopView, "\033[34;1mParams\033[0m: \n%s\n", api.Params)
@@ -399,11 +396,11 @@ func UpdateAPIList(g *gocui.Gui) {
 func RefreshRequestRecordList(g *gocui.Gui) {
 	view, _ := g.View("request-history")
 
-	list := models.RequestRecordList()
+	list := service.RequestRecordList()
 
 	view.Clear()
 	for _, record := range list {
-		if record.Id == models.SelectedQuestRecord {
+		if record.Id == entity.SelectedQuestRecord {
 		    fmt.Fprintf(view, ">\033[34;1m%s\033[0m [\033[a31;1m%s\033[0m] \n",
 		                record.RequestTime.Local().Format("2006-01-02 15:04:05"), record.Path)
 		} else {
@@ -414,7 +411,7 @@ func RefreshRequestRecordList(g *gocui.Gui) {
 }
 
 func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
-	if models.SelectedAPI == -1 {
+	if entity.SelectedAPI == -1 {
 		return nil
 	}
 
@@ -427,13 +424,13 @@ func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	// 获取当前选中的API
-	api, _ := models.FindAPI(models.SelectedAPI)
+	api, _ := db.FindAPI(entity.SelectedAPI)
 
 	fillFormFields(g, api)
 	return nil
 }
 
-func fillFormFields(g *gocui.Gui, api * models.API) error {
+func fillFormFields(g *gocui.Gui, api *entity.API) error {
     // 定义要填充的字段映射
     fields := map[string]string{
         "form-name":   api.Name,
@@ -457,7 +454,7 @@ func fillFormFields(g *gocui.Gui, api * models.API) error {
 
 // DeleteAPI 删除选中的API
 func DeleteAPI(g *gocui.Gui, v *gocui.View) error {
-	if models.SelectedAPI == -1 {
+	if entity.SelectedAPI == -1 {
 		return nil
 	}
 
@@ -491,11 +488,11 @@ func JumpDetailView(g *gocui.Gui, v *gocui.View) error {
 }
 
 func RequestAPI(g *gocui.Gui, v *gocui.View) error {
-	if models.SelectedAPI == -1 {
+	if entity.SelectedAPI == -1 {
 		return nil
 	}
 
-	api, _ := models.FindAPI(models.SelectedAPI)
+	api, _ := db.FindAPI(entity.SelectedAPI)
 	params, err := api.GetParams()
 	if err != nil {
 		return err
@@ -601,7 +598,7 @@ func MapToJSONString(params map[string]interface{}) (string, error) {
     return jsonString, nil
 }
 
-func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) error {
+func sendRequest(g *gocui.Gui, api *entity.API, params map[string]interface{}) error {
 	client := resty.New()
 
 	request := client.R().
@@ -625,11 +622,11 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 	json_params, _ := MapToJSONString(params)
 
 	if err != nil {
-		models.InsertRequestRecord(api, json_params, err.Error())
+		db.InsertRequestRecord(api, json_params, err.Error())
 		fmt.Fprint(bottomView, "请求失败: ", err)
 	} else {
 		respBody := resp.Body()
-		models.InsertRequestRecord(api, json_params, string(respBody))
+		db.InsertRequestRecord(api, json_params, string(respBody))
 		fmt.Fprint(bottomView, string(respBody))
 	}
 
@@ -640,13 +637,13 @@ func sendRequest(g *gocui.Gui, api *models.API, params map[string]interface{}) e
 
 // ConfirmDeleteAPI 确认删除API
 func ConfirmDeleteAPI(g *gocui.Gui, v *gocui.View) error {
-	models.DeleteAPI(models.SelectedAPI)
+	db.DeleteAPI(entity.SelectedAPI)
 
-    list := models.APIList()
+    list := service.APIList()
 	if len(list) == 0 {
-		models.SelectedAPI = -1
+		entity.SelectedAPI = -1
 	} else {
-		models.SelectedAPI = list[len(list)-1].Id
+		entity.SelectedAPI = list[len(list)-1].Id
 	}
 
 	// 更新视图

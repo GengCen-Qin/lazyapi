@@ -6,11 +6,13 @@ import (
 	"github.com/GengCen-Qin/gocui"
 	"lazyapi/forms"
 	"lazyapi/ui"
-	"lazyapi/models"
+	"lazyapi/models/db"
+	"lazyapi/models/entity"
+	"lazyapi/models/service"
 )
 
 func main() {
-	defer models.CloseDB()
+	defer db.CloseDB()
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Panicln(err)
@@ -33,9 +35,9 @@ func main() {
 
 	// 使用Update方法确保在GUI完全初始化后更新API列表
 	g.Update(func(g *gocui.Gui) error {
-		list := models.APIList()
+		list := service.APIList()
 		if len(list) != 0 {
-			models.SelectedAPI = list[0].Id
+			entity.SelectedAPI = list[0].Id
 		}
  		forms.UpdateAPIList(g)
    		forms.RefreshRequestRecordList(g)
