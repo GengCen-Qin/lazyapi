@@ -33,7 +33,7 @@ var (
 
 	// StatusMessages - 每个视图对应的状态栏文案
 	StatusMessages = map[string]string{
-		"left":         "API_LIST | n(new), e(edit), d(delete), r(request), space(jump detail)",
+		"left":         "API_LIST | n(new), e(edit), d(delete), r(request)",
 		"right-top":    "REQUEST_DEFINITION",
 		"right-bottom": "RESPOND_RESULT",
 		"requestConfirmView": "ctrl-r(confirm), ctrl-q(cancel)",
