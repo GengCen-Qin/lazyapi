@@ -35,9 +35,13 @@ func main() {
 
 	// 使用Update方法确保在GUI完全初始化后更新API列表
 	g.Update(func(g *gocui.Gui) error {
-		list := service.APIList()
-		if len(list) != 0 {
-			entity.SelectedAPI = list[0].Id
+		apiList := service.APIList()
+		if len(apiList) != 0 {
+			entity.SelectedAPI = apiList[0].Id
+		}
+		recordList := service.RequestRecordList()
+		if len(apiList) != 0 {
+			entity.SelectedQuestRecord = recordList[0].Id
 		}
  		forms.UpdateAPIList(g)
    		forms.RefreshRequestRecordList(g)
