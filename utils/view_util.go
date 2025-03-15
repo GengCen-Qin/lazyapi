@@ -4,24 +4,28 @@ import (
 	"github.com/GengCen-Qin/gocui"
 )
 
-// ScrollViewUp 向上滚动视图
-// 减小原点的Y坐标以向上滚动
-func ScrollViewUp(g *gocui.Gui, v *gocui.View) error {
-	targetView, err := g.View("respond_info")
+func ScrollViewPoint(g *gocui.Gui, v *gocui.View, view_name string, direact int) error {
+	targetView, err := g.View(view_name)
 	if err != nil {
 		return err
 	}
-    return ScrollView(targetView, -1)
+    return ScrollView(targetView, direact)
 }
 
-// ScrollViewDown 向下滚动视图
-// 增加原点的Y坐标以向下滚动
-func ScrollViewDown(g *gocui.Gui, v *gocui.View) error {
-	targetView, err := g.View("respond_info")
-	if err != nil {
-		return err
-	}
-    return ScrollView(targetView, 1)
+func ScrollApiInfoViewUp(g *gocui.Gui, v *gocui.View) error {
+    return ScrollViewPoint(g, v, "api_info", -1)
+}
+
+func ScrollApiInfoViewDown(g *gocui.Gui, v *gocui.View) error {
+	return ScrollViewPoint(g, v, "api_info", 1)
+}
+
+func ScrollRespondInfoViewUp(g *gocui.Gui, v *gocui.View) error {
+	return ScrollViewPoint(g, v, "respond_info", -1)
+}
+
+func ScrollRespondInfoViewDown(g *gocui.Gui, v *gocui.View) error {
+	return ScrollViewPoint(g, v, "respond_info", 1)
 }
 
 // ScrollView 通用滚动视图函数
@@ -32,7 +36,9 @@ func ScrollView(v *gocui.View, dy int) error {
     }
 
     ox, oy := v.Origin()
+
     if oy+dy >= 0 {  // 防止滚动到负位置
+
         if err := v.SetOrigin(ox, oy+dy); err != nil {
             return err
         }

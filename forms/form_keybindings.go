@@ -35,12 +35,24 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 		return err
 	}
 
+	if err := g.SetKeybinding("record_list", gocui.KeySpace, gocui.ModNone, JumpApiDetail); err != nil {
+		return err
+	}
+
 	// 添加上下键绑定
 	if err := g.SetKeybinding("api_list", gocui.KeyArrowUp, gocui.ModNone, MoveAPISelectionUp); err != nil {
 		return err
 	}
 
 	if err := g.SetKeybinding("api_list", gocui.KeyArrowDown, gocui.ModNone, MoveAPISelectionDown); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("api_info", gocui.KeyEsc, gocui.ModNone, JumpOut); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("respond_info", gocui.KeyEsc, gocui.ModNone, JumpOut); err != nil {
 		return err
 	}
 

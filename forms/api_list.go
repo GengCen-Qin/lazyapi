@@ -166,7 +166,15 @@ func MoveRequestRecordSelectionDown(g *gocui.Gui, v *gocui.View) error {
 }
 
 func JumpApiDetail(g *gocui.Gui, v *gocui.View) error {
+	UpdateStatusBar(g, "api_info")
 	_, err := g.SetCurrentView("api_info")
+	return err
+}
+
+func JumpOut(g *gocui.Gui, v *gocui.View) error {
+    view_name := common.ViewArr[common.ViewActiveIndex]
+    _, err := g.SetCurrentView(view_name)
+    UpdateStatusBar(g, view_name)
 	return err
 }
 

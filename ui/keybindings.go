@@ -51,10 +51,22 @@ func setupViewNavigationKeybindings(g *gocui.Gui) error {
 
 // setupScrollKeybindings 设置滚动相关的键绑定
 func setupScrollKeybindings(g *gocui.Gui) error {
-    if err := g.SetKeybinding("api_list", gocui.KeyCtrlLsqBracket, gocui.ModNone, utils.ScrollViewUp); err != nil {
+    if err := g.SetKeybinding("api_list", gocui.KeyCtrlLsqBracket, gocui.ModNone, utils.ScrollRespondInfoViewUp); err != nil {
         return err
     }
-    if err := g.SetKeybinding("api_list", gocui.KeyCtrlRsqBracket, gocui.ModNone, utils.ScrollViewDown); err != nil {
+    if err := g.SetKeybinding("api_list", gocui.KeyCtrlRsqBracket, gocui.ModNone, utils.ScrollRespondInfoViewDown); err != nil {
+        return err
+    }
+    if err := g.SetKeybinding("respond_info", gocui.KeyArrowUp, gocui.ModNone, utils.ScrollRespondInfoViewUp); err != nil {
+        return err
+    }
+    if err := g.SetKeybinding("respond_info", gocui.KeyArrowDown, gocui.ModNone, utils.ScrollRespondInfoViewDown); err != nil {
+        return err
+    }
+    if err := g.SetKeybinding("api_info", gocui.KeyArrowUp, gocui.ModNone, utils.ScrollApiInfoViewUp); err != nil {
+        return err
+    }
+    if err := g.SetKeybinding("api_info", gocui.KeyArrowDown, gocui.ModNone, utils.ScrollApiInfoViewDown); err != nil {
         return err
     }
 
