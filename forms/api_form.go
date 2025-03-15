@@ -140,7 +140,7 @@ func CloseForm(g *gocui.Gui, v *gocui.View) error {
 	g.DeleteView("form-buttons")
 
 	// 重新设置焦点到左侧视图
-	if _, err := SetCurrentViewOnTop(g, "left"); err != nil {
+	if _, err := SetCurrentViewOnTop(g, "api_list"); err != nil {
 		return err
 	}
 	common.ViewActiveIndex = 0

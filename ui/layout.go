@@ -27,10 +27,10 @@ func Layout(g *gocui.Gui) error {
 	currentView := common.ViewArr[common.ViewActiveIndex]
 
 	// 计算左侧视图的高度分配
-	if currentView == "left" {
+	if currentView == "api_list" {
 		// 如果当前是API列表视图，则它占70%
 		leftApiHeight = int(float64(maxY-2) * 0.7)
-	} else if currentView == "request-history" {
+	} else if currentView == "record_list" {
 		// 如果当前是请求历史视图，则它占70%
 		leftApiHeight = int(float64(maxY-2) * 0.3)
 	} else {
@@ -69,7 +69,7 @@ func createStatusBar(g *gocui.Gui, maxX, maxY int) error {
 
 // createApiListView 创建API列表视图（左上）
 func createApiListView(g *gocui.Gui, leftWidth, leftApiHeight int) error {
-	if v, err := g.SetView("left", 0, 0, leftWidth-1, leftApiHeight); err != nil {
+	if v, err := g.SetView("api_list", 0, 0, leftWidth-1, leftApiHeight); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -82,7 +82,7 @@ func createApiListView(g *gocui.Gui, leftWidth, leftApiHeight int) error {
 
 		// 只有在初始化时才设置当前视图
 		if common.ViewActiveIndex == 0 {
-			if _, err = forms.SetCurrentViewOnTop(g, "left"); err != nil {
+			if _, err = forms.SetCurrentViewOnTop(g, "api_list"); err != nil {
 				return err
 			}
 		}
@@ -92,7 +92,7 @@ func createApiListView(g *gocui.Gui, leftWidth, leftApiHeight int) error {
 
 // createHistoryView 创建请求历史视图（左下）
 func createHistoryView(g *gocui.Gui, leftWidth, leftApiHeight, maxY int) error {
-	if v, err := g.SetView("request-history", 0, leftApiHeight+1, leftWidth-1, maxY-2); err != nil {
+	if v, err := g.SetView("record_list", 0, leftApiHeight+1, leftWidth-1, maxY-2); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -105,18 +105,18 @@ func createHistoryView(g *gocui.Gui, leftWidth, leftApiHeight, maxY int) error {
 // createDetailViews 创建详情视图（右侧）
 func createDetailViews(g *gocui.Gui, leftWidth, maxX, maxY int) error {
 	// 右上视图: 接口定义
-	if v, err := g.SetView("right-top", leftWidth, 0, maxX-1, maxY/2-1); err != nil {
+	if v, err := g.SetView("api_info", leftWidth, 0, maxX-1, maxY/2-1); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
 		v.Title = "接口定义"
 		v.Wrap = true
-		v.Autoscroll = true
+		v.Autoscroll = false
 		v.Editable = false
 	}
 
 	// 右下视图: 响应展示
-	if v, err := g.SetView("right-bottom", leftWidth, maxY/2, maxX-1, maxY-2); err != nil {
+	if v, err := g.SetView("respond_info", leftWidth, maxY/2, maxX-1, maxY-2); err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
@@ -135,8 +135,8 @@ func CopyResponseToClipboard(g *gocui.Gui, v *gocui.View) error {
         return nil
     }
 
-    // 获取right-bottom视图
-    responseView, err := g.View("right-bottom")
+    // 获取respond_info视图
+    responseView, err := g.View("respond_info")
     if err != nil {
         return err
     }

@@ -40,11 +40,11 @@ func main() {
 			entity.SelectedAPI = apiList[0].Id
 		}
 		recordList := service.RequestRecordList()
-		if len(apiList) != 0 {
+		if len(recordList) != 0 {
 			entity.SelectedQuestRecord = recordList[0].Id
 		}
  		forms.UpdateAPIList(g)
-   		forms.RefreshRequestRecordList(g)
+   		forms.UpdateRequestRecordList(g)
 		return nil
 	})
 

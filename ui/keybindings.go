@@ -24,7 +24,7 @@ func GlobleSetupKeybindings(g *gocui.Gui) error {
 	}
 
 	// 为响应内容复制设置键绑定
-	if err := g.SetKeybinding("left", 'y', gocui.ModNone, CopyResponseToClipboard); err != nil {
+	if err := g.SetKeybinding("api_list", 'y', gocui.ModNone, CopyResponseToClipboard); err != nil {
 		return err
 	}
 
@@ -39,10 +39,10 @@ func GlobleSetupKeybindings(g *gocui.Gui) error {
 // setupViewNavigationKeybindings 设置视图导航相关的键绑定
 func setupViewNavigationKeybindings(g *gocui.Gui) error {
 	// Tab键在主要视图间切换
-	if err := g.SetKeybinding("left", gocui.KeyTab, gocui.ModNone, forms.NextView); err != nil {
+	if err := g.SetKeybinding("api_list", gocui.KeyTab, gocui.ModNone, forms.NextView); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("request-history", gocui.KeyTab, gocui.ModNone, forms.NextView); err != nil {
+	if err := g.SetKeybinding("record_list", gocui.KeyTab, gocui.ModNone, forms.NextView); err != nil {
 		return err
 	}
 
@@ -51,10 +51,10 @@ func setupViewNavigationKeybindings(g *gocui.Gui) error {
 
 // setupScrollKeybindings 设置滚动相关的键绑定
 func setupScrollKeybindings(g *gocui.Gui) error {
-    if err := g.SetKeybinding("left", gocui.KeyCtrlLsqBracket, gocui.ModNone, utils.ScrollViewUp); err != nil {
+    if err := g.SetKeybinding("api_list", gocui.KeyCtrlLsqBracket, gocui.ModNone, utils.ScrollViewUp); err != nil {
         return err
     }
-    if err := g.SetKeybinding("left", gocui.KeyCtrlRsqBracket, gocui.ModNone, utils.ScrollViewDown); err != nil {
+    if err := g.SetKeybinding("api_list", gocui.KeyCtrlRsqBracket, gocui.ModNone, utils.ScrollViewDown); err != nil {
         return err
     }
 

@@ -146,7 +146,7 @@ func sendRequest(g *gocui.Gui, api *entity.API, params map[string]interface{}) e
 
 	resp, err := request.Execute(method, api.Path)
 
-	bottomView, _ := g.View("right-bottom")
+	bottomView, _ := g.View("respond_info")
 	bottomView.Clear()
 	utils.ResetViewOrigin(bottomView)
 
@@ -163,6 +163,6 @@ func sendRequest(g *gocui.Gui, api *entity.API, params map[string]interface{}) e
 	}
 
 	UpdateRequestRecordList(g)
-	g.SetCurrentView("left")
+	g.SetCurrentView("api_list")
 	return nil
 }

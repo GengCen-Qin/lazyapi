@@ -16,7 +16,7 @@ import (
 
 // UpdateAPIList 更新左侧API列表显示
 func UpdateAPIList(g *gocui.Gui) {
-	leftView, leftViewError := g.View("left")
+	leftView, leftViewError := g.View("api_list")
 	if leftViewError != nil {
 		return // 如果视图不存在，直接返回
 	}
@@ -31,13 +31,13 @@ func UpdateAPIList(g *gocui.Gui) {
 		}
 	}
 
-	if common.ViewActiveIndex != common.ViewIndexMap["left"] {
+	if common.ViewActiveIndex != common.ViewIndexMap["api_list"] {
     	return
     }
 
-	rightTopView, _ := g.View("right-top")
+	rightTopView, _ := g.View("api_info")
 	rightTopView.Clear()
-	rightBottomView, _ := g.View("right-bottom")
+	rightBottomView, _ := g.View("respond_info")
 	rightBottomView.Clear()
 
 	if entity.SelectedAPI != -1 {
@@ -62,7 +62,7 @@ func UpdateAPIList(g *gocui.Gui) {
 
 // UpdateRequestRecordList 刷新请求记录列表
 func UpdateRequestRecordList(g *gocui.Gui) {
-	view, _ := g.View("request-history")
+	view, _ := g.View("record_list")
 	view.Clear()
 	list := service.RequestRecordList()
 	for _, record := range list {
@@ -75,13 +75,13 @@ func UpdateRequestRecordList(g *gocui.Gui) {
 		}
 	}
 
-    if common.ViewActiveIndex != common.ViewIndexMap["request-history"] {
+    if common.ViewActiveIndex != common.ViewIndexMap["record_list"] {
     	return
     }
 
-	rightTopView, _ := g.View("right-top")
+	rightTopView, _ := g.View("api_info")
 	rightTopView.Clear()
-	rightBottomView, _ := g.View("right-bottom")
+	rightBottomView, _ := g.View("respond_info")
 	rightBottomView.Clear()
 
 	if entity.SelectedQuestRecord != -1 {
@@ -163,6 +163,11 @@ func MoveRequestRecordSelectionDown(g *gocui.Gui, v *gocui.View) error {
         1,
         func() { UpdateRequestRecordList(g) },
     )
+}
+
+func JumpApiDetail(g *gocui.Gui, v *gocui.View) error {
+	_, err := g.SetCurrentView("api_info")
+	return err
 }
 
 func MoveSelection[T any, ID comparable](

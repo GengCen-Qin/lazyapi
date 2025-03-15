@@ -7,7 +7,7 @@ import (
 // ScrollViewUp 向上滚动视图
 // 减小原点的Y坐标以向上滚动
 func ScrollViewUp(g *gocui.Gui, v *gocui.View) error {
-	targetView, err := g.View("right-bottom")
+	targetView, err := g.View("respond_info")
 	if err != nil {
 		return err
 	}
@@ -17,7 +17,7 @@ func ScrollViewUp(g *gocui.Gui, v *gocui.View) error {
 // ScrollViewDown 向下滚动视图
 // 增加原点的Y坐标以向下滚动
 func ScrollViewDown(g *gocui.Gui, v *gocui.View) error {
-	targetView, err := g.View("right-bottom")
+	targetView, err := g.View("respond_info")
 	if err != nil {
 		return err
 	}
