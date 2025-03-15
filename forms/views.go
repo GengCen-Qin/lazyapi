@@ -79,6 +79,13 @@ func NextView(g *gocui.Gui, v *gocui.View) error {
 
 	// 更新当前活动视图索引
 	common.ViewActiveIndex = nextIndex
+
+ 	// 重新绘制界面以更新布局比例
+    g.Update(func(g *gocui.Gui) error {
+   		UpdateAPIList(g)
+   		RefreshRequestRecordList(g)
+        return nil // 触发重绘
+    })
 	return nil
 }
 

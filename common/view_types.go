@@ -5,6 +5,11 @@ var (
 	// List - 主要视图列表
 	ViewArr = []string{"left", "request-history"}
 
+	ViewIndexMap = map[string]int{
+		"left":            0,
+		"request-history": 1,
+	}
+
 	// Active - 当前激活的视图索引
 	ViewActiveIndex = 0
 

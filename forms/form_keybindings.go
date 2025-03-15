@@ -32,11 +32,19 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 	}
 
 	// 添加上下键绑定
-	if err := g.SetKeybinding("left", gocui.KeyArrowUp, gocui.ModNone, MoveSelectionUp); err != nil {
+	if err := g.SetKeybinding("left", gocui.KeyArrowUp, gocui.ModNone, MoveAPISelectionUp); err != nil {
 		return err
 	}
 
-	if err := g.SetKeybinding("left", gocui.KeyArrowDown, gocui.ModNone, MoveSelectionDown); err != nil {
+	if err := g.SetKeybinding("left", gocui.KeyArrowDown, gocui.ModNone, MoveAPISelectionDown); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("request-history", gocui.KeyArrowUp, gocui.ModNone, MoveRequestRecordSelectionUp); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("request-history", gocui.KeyArrowDown, gocui.ModNone, MoveRequestRecordSelectionDown); err != nil {
 		return err
 	}
 

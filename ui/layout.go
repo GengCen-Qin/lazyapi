@@ -2,7 +2,7 @@ package ui
 
 import (
 	"fmt"
-
+	"lazyapi/common"
 	"lazyapi/forms"
 
 	"github.com/GengCen-Qin/gocui"
@@ -22,8 +22,21 @@ func Layout(g *gocui.Gui) error {
 	// 左侧视图占宽度的 1/3 (33.3%)
 	leftWidth := int(float64(maxX) * 0.333)
 
-	// 计算左侧API列表的高度 - 占左侧总高度的70%
-	leftApiHeight := int(float64(maxY-2) * 0.7)
+	// 根据当前活动视图决定左侧各视图的高度比例
+	var leftApiHeight int
+	currentView := common.ViewArr[common.ViewActiveIndex]
+
+	// 计算左侧视图的高度分配
+	if currentView == "left" {
+		// 如果当前是API列表视图，则它占70%
+		leftApiHeight = int(float64(maxY-2) * 0.7)
+	} else if currentView == "request-history" {
+		// 如果当前是请求历史视图，则它占70%
+		leftApiHeight = int(float64(maxY-2) * 0.3)
+	} else {
+		// 默认情况下，API列表占70%
+		leftApiHeight = int(float64(maxY-2) * 0.7)
+	}
 
 	if err := createApiListView(g, leftWidth, leftApiHeight); err != nil {
 		return err
@@ -67,8 +80,11 @@ func createApiListView(g *gocui.Gui, leftWidth, leftApiHeight int) error {
 		v.SelFgColor = gocui.ColorBlack
 		v.Editable = false
 
-		if _, err = forms.SetCurrentViewOnTop(g, "left"); err != nil {
-			return err
+		// 只有在初始化时才设置当前视图
+		if common.ViewActiveIndex == 0 {
+			if _, err = forms.SetCurrentViewOnTop(g, "left"); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
