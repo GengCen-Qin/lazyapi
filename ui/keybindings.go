@@ -45,6 +45,12 @@ func setupViewNavigationKeybindings(g *gocui.Gui) error {
 	if err := g.SetKeybinding("record_list", gocui.KeyTab, gocui.ModNone, forms.NextView); err != nil {
 		return err
 	}
+	if err := g.SetKeybinding("api_info", gocui.KeyTab, gocui.ModNone, forms.NextInfoView); err != nil {
+		return err
+	}
+	if err := g.SetKeybinding("respond_info", gocui.KeyTab, gocui.ModNone, forms.NextInfoView); err != nil {
+		return err
+	}
 
 	return nil
 }

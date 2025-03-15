@@ -2,7 +2,7 @@ package common
 
 // 视图相关的常量和状态
 var (
-	// List - 主要视图列表
+	// 列表视图
 	ViewArr = []string{"api_list", "record_list"}
 
 	ViewIndexMap = map[string]int{
@@ -10,8 +10,17 @@ var (
 		"record_list": 1,
 	}
 
-	// Active - 当前激活的视图索引
 	ViewActiveIndex = 0
+
+	// 详情视图
+	InfoViewArr = []string{"api_info", "respond_info"}
+
+	InfoViewIndexMap = map[string]int{
+		"api_info": 0,
+		"respond_info": 1,
+	}
+
+	InfoViewActiveIndex = 0
 
 	// StatusMessages - 每个视图对应的状态栏文案
 	StatusMessages = map[string]string{

@@ -89,6 +89,21 @@ func NextView(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func NextInfoView(g *gocui.Gui, v *gocui.View) error {
+	// 计算下一个视图索引
+	nextIndex := (common.InfoViewActiveIndex + 1) % len(common.InfoViewArr)
+	name := common.InfoViewArr[nextIndex]
+
+	// 设置下一个视图为当前视图
+	if _, err := SetCurrentViewOnTop(g, name); err != nil {
+		return err
+	}
+
+	// 更新当前活动视图索引
+	common.InfoViewActiveIndex = nextIndex
+	return nil
+}
+
 // UpdateStatusBar 更新状态栏信息
 // 根据当前活动视图显示相应的提示信息
 func UpdateStatusBar(g *gocui.Gui, viewName string) error {
