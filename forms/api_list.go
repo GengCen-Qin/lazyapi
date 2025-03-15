@@ -35,16 +35,17 @@ func UpdateAPIList(g *gocui.Gui) {
     	return
     }
 
-	index := slices.IndexFunc(list, func(x entity.API) bool {
-	    return x.Id == entity.SelectedAPI
-	})
-
 	rightTopView, _ := g.View("right-top")
 	rightTopView.Clear()
 	rightBottomView, _ := g.View("right-bottom")
 	rightBottomView.Clear()
 
 	if entity.SelectedAPI != -1 {
+		index := slices.IndexFunc(list, func(x entity.API) bool {
+	        return x.Id == entity.SelectedAPI
+	    })
+		EnsureSelectionVisible(leftView, index)
+		// 保证底色特效随着移动而跟着移动
 		leftView.SetCursor(0, index)
 		api, _ := db.FindAPI(entity.SelectedAPI)
 		var buffer bytes.Buffer
@@ -78,17 +79,17 @@ func UpdateRequestRecordList(g *gocui.Gui) {
     	return
     }
 
-	index := slices.IndexFunc(list, func(x entity.RequestRecord) bool {
-	    return x.Id == entity.SelectedQuestRecord
-	})
-
 	rightTopView, _ := g.View("right-top")
 	rightTopView.Clear()
 	rightBottomView, _ := g.View("right-bottom")
 	rightBottomView.Clear()
 
 	if entity.SelectedQuestRecord != -1 {
-		view.SetCursor(0, index)
+	 	index := slices.IndexFunc(list, func(x entity.RequestRecord) bool {
+            return x.Id == entity.SelectedQuestRecord
+        })
+		EnsureSelectionVisible(view, index)
+
 		api, _ := db.Find(entity.SelectedQuestRecord)
 		var buffer bytes.Buffer
 	    format_params, _ := utils.PrettyPrintJSON(api.Params)
@@ -100,6 +101,28 @@ func UpdateRequestRecordList(g *gocui.Gui) {
 		fmt.Fprint(rightBottomView, format_respond)
 		rightTopView.SetOrigin(0, 0)
 	}
+}
+
+func EnsureSelectionVisible(view *gocui.View, selectedIndex int) {
+    if selectedIndex < 0 {
+        return
+    }
+
+    _, viewHeight := view.Size()
+    ox, oy := view.Origin()
+
+    // 如果选中项在视图上方，则向上滚动
+    if selectedIndex < oy {
+        view.SetOrigin(ox, selectedIndex)
+    }
+    // 如果选中项在视图下方，则向下滚动
+    if selectedIndex >= oy+viewHeight-1 {
+        view.SetOrigin(ox, selectedIndex-viewHeight+1)
+    }
+
+    // 重新计算当前原点后的相对光标位置
+    ox, oy = view.Origin() // 获取调整后的原点
+    view.SetCursor(0, selectedIndex-oy)
 }
 
 func MoveAPISelectionUp(g *gocui.Gui, v *gocui.View) error {
@@ -169,6 +192,7 @@ func MoveSelection[T any, ID comparable](
     }
 
     newIndex := index + direction
+    // 防止越过左右边界
     if newIndex < 0 || newIndex >= len(list) {
         return nil
     }

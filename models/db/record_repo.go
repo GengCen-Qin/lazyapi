@@ -59,7 +59,7 @@ func InsertRequestRecord(api *entity.API, params string, respond string) error {
 
 func GetAllRequestRecords() ([]entity.RequestRecord, error) {
     db := GetDB()
-    rows, err := db.Query("SELECT id, name, path, method, params, respond, request_time FROM request_records")
+    rows, err := db.Query("SELECT id, name, path, method, params, respond, request_time FROM request_records order by request_time desc")
     if err != nil {
         return nil, err
     }
