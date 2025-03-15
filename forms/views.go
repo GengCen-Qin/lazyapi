@@ -83,7 +83,7 @@ func NextView(g *gocui.Gui, v *gocui.View) error {
  	// 重新绘制界面以更新布局比例
     g.Update(func(g *gocui.Gui) error {
    		UpdateAPIList(g)
-   		RefreshRequestRecordList(g)
+   		UpdateRequestRecordList(g)
         return nil // 触发重绘
     })
 	return nil
@@ -102,7 +102,7 @@ func UpdateStatusBar(g *gocui.Gui, viewName string) error {
 	// 获取并显示当前视图对应的状态消息
 	message, exists := common.StatusMessages[viewName]
 	if !exists {
-		message = "按 TAB 切换视图 | Ctrl+C 退出"
+		message = "Ctrl+C 退出"
 	}
 
 	fmt.Fprintf(statusView, "%s", message)

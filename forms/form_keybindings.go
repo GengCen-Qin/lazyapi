@@ -9,7 +9,7 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 	// 左侧视图键绑定 - 'n'键创建新API或取消删除
 	if err := g.SetKeybinding("left", 'n', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
 		if FormInfo.IsDelete {
-			return CancelDeleteAPI(g, v)
+			return CancelDelete(g, v)
 		}
 		return ShowNewAPIForm(g, v)
 	}); err != nil {
@@ -45,6 +45,10 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 	}
 
 	if err := g.SetKeybinding("request-history", gocui.KeyArrowDown, gocui.ModNone, MoveRequestRecordSelectionDown); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("request-history", 'd', gocui.ModNone, DeleteRequestRecord); err != nil {
 		return err
 	}
 

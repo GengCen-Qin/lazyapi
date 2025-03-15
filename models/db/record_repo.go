@@ -25,6 +25,22 @@ func Find(id int) (*entity.RequestRecord, error) {
     return &record, nil
 }
 
+func DeleteRecord(id int) error {
+	db := GetDB()
+    stmt, err := db.Prepare("DELETE FROM request_records WHERE id=?")
+    if err != nil {
+        return err
+    }
+    defer stmt.Close()
+
+    _, err = stmt.Exec(id)
+    if err != nil {
+        return err
+    }
+
+    return nil
+}
+
 func InsertRequestRecord(api *entity.API, params string, respond string) error {
     db := GetDB()
     stmt, err := db.Prepare("INSERT INTO request_records(name, path, method, params, respond) values(?, ?, ?, ?, ?)")

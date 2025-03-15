@@ -59,8 +59,8 @@ func UpdateAPIList(g *gocui.Gui) {
 	}
 }
 
-// RefreshRequestRecordList 刷新请求记录列表
-func RefreshRequestRecordList(g *gocui.Gui) {
+// UpdateRequestRecordList 刷新请求记录列表
+func UpdateRequestRecordList(g *gocui.Gui) {
 	view, _ := g.View("request-history")
 	view.Clear()
 	list := service.RequestRecordList()
@@ -128,7 +128,7 @@ func MoveRequestRecordSelectionUp(g *gocui.Gui, v *gocui.View) error {
         func(record entity.RequestRecord) int { return record.Id },
         &entity.SelectedQuestRecord,
         -1,
-        func() { RefreshRequestRecordList(g) },
+        func() { UpdateRequestRecordList(g) },
     )
 }
 
@@ -138,7 +138,7 @@ func MoveRequestRecordSelectionDown(g *gocui.Gui, v *gocui.View) error {
         func(record entity.RequestRecord) int { return record.Id },
         &entity.SelectedQuestRecord,
         1,
-        func() { RefreshRequestRecordList(g) },
+        func() { UpdateRequestRecordList(g) },
     )
 }
 

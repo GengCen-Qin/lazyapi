@@ -19,5 +19,6 @@ var (
 		"right-top":        "REQUEST_DEFINITION",
 		"right-bottom":     "RESPOND_RESULT",
 		"requestConfirmView": "ctrl-r(confirm), ctrl-q(cancel)",
+		"request-history":  "d(delete)",
 	}
 )

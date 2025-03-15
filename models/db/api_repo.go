@@ -40,7 +40,7 @@ func UpdateAPI(api *entity.API) error {
     return nil
 }
 
-func DeleteAPI(id int) error {
+func DeleteApi(id int) error {
 	db := GetDB()
     stmt, err := db.Prepare("DELETE FROM apis WHERE id=?")
     if err != nil {

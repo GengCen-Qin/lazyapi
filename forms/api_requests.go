@@ -162,7 +162,7 @@ func sendRequest(g *gocui.Gui, api *entity.API, params map[string]interface{}) e
 		fmt.Fprint(bottomView, format_josn)
 	}
 
-	RefreshRequestRecordList(g)
+	UpdateRequestRecordList(g)
 	g.SetCurrentView("left")
 	return nil
 }
