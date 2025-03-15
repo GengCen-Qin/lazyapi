@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 
 	"lazyapi/common"
-	"lazyapi/ui"
 	"lazyapi/models/entity"
 
 	"github.com/GengCen-Qin/gocui"
@@ -14,9 +13,9 @@ import (
 
 // ShowNewAPIForm 显示新建API表单
 func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
-	common.FormInfo.Active = true
+	FormInfo.Active = true
 	maxX, maxY := g.Size()
-	common.FormInfo.CurrentField = 0 // 重置当前字段为第一个
+	FormInfo.CurrentField = 0 // 重置当前字段为第一个
 
 	// 创建表单容器
 	if v, err := g.SetView("form", maxX/6, maxY/6, maxX*5/6, maxY*5/6); err != nil {
@@ -27,15 +26,15 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	var form_view, _ = g.View("form")
-	if common.FormInfo.IsEditing {
+	if FormInfo.IsEditing {
     	form_view.Title = "编辑API"
 	} else {
 		form_view.Title = "新建API"
 	}
 
 	// 创建表单字段
-	for _, field := range common.FormInfo.Fields {
-		label := common.FormInfo.Labels[field]
+	for _, field := range FormInfo.Fields {
+		label := FormInfo.Labels[field]
 		fieldName := "form-" + field
 		var fieldView *gocui.View
 		var err error
@@ -104,13 +103,13 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 
 	// 确保表单及其所有字段保持在最顶层
 	g.SetViewOnTop("form")
-	for _, field := range common.FormInfo.Fields {
+	for _, field := range FormInfo.Fields {
 		g.SetViewOnTop("form-" + field)
 	}
 	g.SetViewOnTop("form-buttons")
 
 	// 设置初始焦点到第一个字段
-	if _, err := ui.SetCurrentViewOnTop(g, "form-"+common.FormInfo.Fields[0]); err != nil {
+	if _, err := SetCurrentViewOnTop(g, "form-"+FormInfo.Fields[0]); err != nil {
 		return err
 	}
 
@@ -121,13 +120,13 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
 
 // CloseForm 关闭表单
 func CloseForm(g *gocui.Gui, v *gocui.View) error {
-	if !common.FormInfo.Active {
+	if !FormInfo.Active {
 		return nil
 	}
 
 	// 删除所有表单视图
 	g.DeleteView("form")
-	for _, field := range common.FormInfo.Fields {
+	for _, field := range FormInfo.Fields {
 		fieldName := "form-" + field
 		g.DeleteView(fieldName)
 
@@ -141,41 +140,41 @@ func CloseForm(g *gocui.Gui, v *gocui.View) error {
 	g.DeleteView("form-buttons")
 
 	// 重新设置焦点到左侧视图
-	if _, err := ui.SetCurrentViewOnTop(g, "left"); err != nil {
+	if _, err := SetCurrentViewOnTop(g, "left"); err != nil {
 		return err
 	}
-	common.Active = 0
-	common.FormInfo.Active = false
+	common.ViewActiveIndex = 0
+	FormInfo.Active = false
 	g.Cursor = false
 	return nil
 }
 
 // NextFormField 在表单字段间切换
 func NextFormField(g *gocui.Gui, v *gocui.View) error {
-	nextField := (common.FormInfo.CurrentField + 1) % len(common.FormInfo.Fields)
-	fieldName := "form-" + common.FormInfo.Fields[nextField]
+	nextField := (FormInfo.CurrentField + 1) % len(FormInfo.Fields)
+	fieldName := "form-" + FormInfo.Fields[nextField]
 
-	if _, err := ui.SetCurrentViewOnTop(g, fieldName); err != nil {
+	if _, err := SetCurrentViewOnTop(g, fieldName); err != nil {
 		return err
 	}
 
-	common.FormInfo.CurrentField = nextField
+	FormInfo.CurrentField = nextField
 	return nil
 }
 
 // BeforeFormField 切换到前一个表单字段
 func BeforeFormField(g *gocui.Gui, v *gocui.View) error {
 	// 计算前一个字段的索引
-	prevField := (common.FormInfo.CurrentField - 1 + len(common.FormInfo.Fields)) % len(common.FormInfo.Fields)
-	fieldName := "form-" + common.FormInfo.Fields[prevField]
+	prevField := (FormInfo.CurrentField - 1 + len(FormInfo.Fields)) % len(FormInfo.Fields)
+	fieldName := "form-" + FormInfo.Fields[prevField]
 
 	// 将焦点设置到前一个字段
-	if _, err := ui.SetCurrentViewOnTop(g, fieldName); err != nil {
+	if _, err := SetCurrentViewOnTop(g, fieldName); err != nil {
 		return err
 	}
 
 	// 更新当前字段索引
-	common.FormInfo.CurrentField = prevField
+	FormInfo.CurrentField = prevField
 	return nil
 }
 

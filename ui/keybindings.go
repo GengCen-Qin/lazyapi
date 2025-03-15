@@ -3,6 +3,7 @@ package ui
 import (
 	"github.com/GengCen-Qin/gocui"
 	"lazyapi/utils"
+	"lazyapi/forms"
 )
 
 // Quit 退出程序
@@ -38,10 +39,10 @@ func GlobleSetupKeybindings(g *gocui.Gui) error {
 // setupViewNavigationKeybindings 设置视图导航相关的键绑定
 func setupViewNavigationKeybindings(g *gocui.Gui) error {
 	// Tab键在主要视图间切换
-	if err := g.SetKeybinding("left", gocui.KeyTab, gocui.ModNone, NextView); err != nil {
+	if err := g.SetKeybinding("left", gocui.KeyTab, gocui.ModNone, forms.NextView); err != nil {
 		return err
 	}
-	if err := g.SetKeybinding("request-history", gocui.KeyTab, gocui.ModNone, NextView); err != nil {
+	if err := g.SetKeybinding("request-history", gocui.KeyTab, gocui.ModNone, forms.NextView); err != nil {
 		return err
 	}
 

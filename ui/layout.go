@@ -3,6 +3,8 @@ package ui
 import (
 	"fmt"
 
+	"lazyapi/forms"
+
 	"github.com/GengCen-Qin/gocui"
 	"github.com/atotto/clipboard"
 )
@@ -65,7 +67,7 @@ func createApiListView(g *gocui.Gui, leftWidth, leftApiHeight int) error {
 		v.SelFgColor = gocui.ColorBlack
 		v.Editable = false
 
-		if _, err = SetCurrentViewOnTop(g, "left"); err != nil {
+		if _, err = forms.SetCurrentViewOnTop(g, "left"); err != nil {
 			return err
 		}
 	}

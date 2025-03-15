@@ -4,21 +4,19 @@ import (
 	"fmt"
 	"strings"
 
-	"lazyapi/common"
 	"lazyapi/models/db"
 	"lazyapi/models/entity"
 	"lazyapi/models/service"
-	"lazyapi/ui"
 
 	"github.com/GengCen-Qin/gocui"
 )
 
 // SaveNewAPI 保存API（新建或编辑）
 func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
-	if !common.FormInfo.Active {
+	if !FormInfo.Active {
 		return nil
 	}
-	if common.FormInfo.IsDelete {
+	if FormInfo.IsDelete {
 		return nil
 	}
 
@@ -42,7 +40,7 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
     }
 
 	// 如果是编辑模式，更新现有API
-	if common.FormInfo.IsEditing {
+	if FormInfo.IsEditing {
 		service.EditAPI(entity.SelectedAPI, name, path, method, params)
 	} else {
 		// 否则，创建新API并添加到列表
@@ -54,7 +52,7 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 	UpdateAPIList(g)
 
 	// 关闭表单
-	common.FormInfo.IsEditing = false
+	FormInfo.IsEditing = false
 	// 关闭光标
 	g.Cursor = false
 	return CloseForm(g, v)
@@ -67,7 +65,7 @@ func EditAPIForm(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	// 标记为编辑模式
-	common.FormInfo.IsEditing = true
+	FormInfo.IsEditing = true
 
 	// 显示表单并填充数据
 	if err := ShowNewAPIForm(g, v); err != nil {
@@ -87,7 +85,7 @@ func DeleteAPI(g *gocui.Gui, v *gocui.View) error {
 		return nil
 	}
 
-	common.FormInfo.IsDelete = true
+	FormInfo.IsDelete = true
 
 	// 显示确认提示
 	statusView, _ := g.View("status")
@@ -129,7 +127,7 @@ func ConfirmDeleteAPI(g *gocui.Gui, v *gocui.View) error {
 	g.DeleteKeybinding("", 'n', gocui.ModNone)
 
 	// 重置删除标志
-	common.FormInfo.IsDelete = false
+	FormInfo.IsDelete = false
 
 	return nil
 }
@@ -145,12 +143,12 @@ func CancelDeleteAPI(g *gocui.Gui, v *gocui.View) error {
 	g.DeleteKeybinding("", 'n', gocui.ModNone)
 
 	// 将焦点重新设置到 left 视图
-	if _, err := ui.SetCurrentViewOnTop(g, "left"); err != nil {
+	if _, err := SetCurrentViewOnTop(g, "left"); err != nil {
 		return err
 	}
 
 	// 重置删除标志
-	common.FormInfo.IsDelete = false
+	FormInfo.IsDelete = false
 
 	return nil
 }

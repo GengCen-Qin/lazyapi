@@ -1,11 +1,12 @@
-package ui
+package forms
 
 import (
 	"fmt"
 	"strings"
 
-	"github.com/GengCen-Qin/gocui"
 	"lazyapi/common"
+
+	"github.com/GengCen-Qin/gocui"
 )
 
 // SetCurrentViewOnTop 设置当前视图为顶层并更新状态栏
@@ -38,7 +39,7 @@ func SetCurrentViewOnTop(g *gocui.Gui, name string) (*gocui.View, error) {
 
 // isFormView 检查是否为表单相关视图
 func isFormView(name string) bool {
-	return common.FormInfo.Active && strings.HasPrefix(name, "form")
+	return FormInfo.Active && strings.HasPrefix(name, "form")
 }
 
 // ensureFormOnTop 确保表单及其所有元素在顶部
@@ -54,7 +55,7 @@ func ensureFormOnTop(g *gocui.Gui) error {
 	}
 
 	// 将所有表单字段置于顶部
-	for _, field := range common.FormInfo.Fields {
+	for _, field := range FormInfo.Fields {
 		fieldName := "form-" + field
 		if _, err := g.SetViewOnTop(fieldName); err != nil {
 			return err
@@ -68,7 +69,7 @@ func ensureFormOnTop(g *gocui.Gui) error {
 // 循环遍历所有主视图
 func NextView(g *gocui.Gui, v *gocui.View) error {
 	// 计算下一个视图索引
-	nextIndex := (common.Active + 1) % len(common.ViewArr)
+	nextIndex := (common.ViewActiveIndex + 1) % len(common.ViewArr)
 	name := common.ViewArr[nextIndex]
 
 	// 设置下一个视图为当前视图
@@ -77,7 +78,7 @@ func NextView(g *gocui.Gui, v *gocui.View) error {
 	}
 
 	// 更新当前活动视图索引
-	common.Active = nextIndex
+	common.ViewActiveIndex = nextIndex
 	return nil
 }
 
