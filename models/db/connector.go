@@ -63,11 +63,6 @@ func createTables() error {
     );
     `
     _, err := db.Exec(query)
-    if err != nil {
-        log.Println("Error initializing database:", err)
-    } else {
-        log.Println("Database initialized successfully.")
-    }
     return err
 }
 
