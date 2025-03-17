@@ -13,109 +13,184 @@ import (
 
 // ShowNewAPIForm 显示新建API表单
 func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
-	FormInfo.Active = true
-	maxX, maxY := g.Size()
-	FormInfo.CurrentField = 0 // 重置当前字段为第一个
+    FormInfo.Active = true
+    FormInfo.CurrentField = 0
 
-	// 创建表单容器
-	if v, err := g.SetView("form", maxX/6, maxY/6, maxX*5/6, maxY*5/6); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-		v.Wrap = true
-	}
+    if err := createFormContainer(g); err != nil {
+        return err
+    }
 
-	var form_view, _ = g.View("form")
-	if FormInfo.IsEditing {
-    	form_view.Title = "编辑API"
-	} else {
-		form_view.Title = "新建API"
-	}
+    if err := setupFormTitle(g); err != nil {
+        return err
+    }
 
-	// 创建表单字段
-	for _, field := range FormInfo.Fields {
-		label := FormInfo.Labels[field]
-		fieldName := "form-" + field
-		var fieldView *gocui.View
-		var err error
+    if err := createFormFields(g); err != nil {
+        return err
+    }
 
-		// 调整视图布局
-		switch field {
-		case "name", "method":
-			// 将 "名称" 和 "请求方式" 放在同一行
-			if field == "name" {
-				fieldView, err = g.SetView(fieldName, maxX/6+1, maxY/6+2, maxX/2-1, maxY/6+4)
-			} else {
-				fieldView, err = g.SetView(fieldName, maxX/2+1, maxY/6+2, maxX*5/6-1, maxY/6+4)
-			}
-		case "path":
-			// "请求路径" 放在第二行
-			fieldView, err = g.SetView(fieldName, maxX/6+1, maxY/6+5, maxX*5/6-1, maxY/6+7)
-		case "params":
-			// "请求参数" 放在第三行，并且视图更大
-			fieldView, err = g.SetView(fieldName, maxX/6+1, maxY/6+8, maxX*5/6-1, maxY*5/6-1)
-		}
+    if err := createFormButtons(g); err != nil {
+        return err
+    }
 
-		if err != nil && err != gocui.ErrUnknownView {
-			return err
-		}
-		fieldView.Title = label
-		fieldView.Editable = true
-		fieldView.Wrap = true
-		if field == "method" {
-			fmt.Fprint(fieldView, "GET")
-		}
-		if field == "params" {
-			fmt.Fprint(fieldView, "{}")
-		}
-		if field == "path" {
-			fmt.Fprint(fieldView, "http://")
-		}
+    if err := setupViewOrder(g); err != nil {
+        return err
+    }
 
-		// 为每个字段添加键绑定
-		if err := g.SetKeybinding(fieldName, gocui.KeyTab, gocui.ModNone, NextFormField); err != nil {
-			return err
-		}
-		if err := g.SetKeybinding(fieldName, gocui.KeyEsc, gocui.ModNone, CloseForm); err != nil {
-			return err
-		}
-		if field != "params" {
-			if err := g.SetKeybinding(fieldName, gocui.KeyEnter, gocui.ModNone, SaveNewAPI); err != nil {
-				return err
-			}
-			if err := g.SetKeybinding(fieldName, gocui.KeyArrowDown, gocui.ModNone, NextFormField); err != nil {
-				return err
-			}
-			if err := g.SetKeybinding(fieldName, gocui.KeyArrowUp, gocui.ModNone, BeforeFormField); err != nil {
-				return err
-			}
-		}
-	}
+    g.Cursor = true
+    return nil
+}
 
-	// 添加按钮
-	if v, err := g.SetView("form-buttons", maxX/6+1, maxY*5/6-3, maxX*5/6-1, maxY*5/6-1); err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-		v.Frame = false
-		fmt.Fprint(v, "保存(Enter)  取消(Esc)")
-	}
+// createFormContainer 创建表单容器
+func createFormContainer(g *gocui.Gui) error {
+    maxX, maxY := g.Size()
+    if v, err := g.SetView("form", maxX/6, maxY/6, maxX*5/6, maxY*5/6); err != nil {
+        if err != gocui.ErrUnknownView {
+            return err
+        }
+        v.Wrap = true
+    }
+    return nil
+}
 
-	// 确保表单及其所有字段保持在最顶层
-	g.SetViewOnTop("form")
-	for _, field := range FormInfo.Fields {
-		g.SetViewOnTop("form-" + field)
-	}
-	g.SetViewOnTop("form-buttons")
+// setupFormTitle 设置表单标题
+func setupFormTitle(g *gocui.Gui) error {
+    form_view, err := g.View("form")
+    if err != nil {
+        return err
+    }
 
-	// 设置初始焦点到第一个字段
-	if _, err := SetCurrentViewOnTop(g, "form-"+FormInfo.Fields[0]); err != nil {
-		return err
-	}
+    if FormInfo.IsEditing {
+        form_view.Title = "编辑API"
+    } else {
+        form_view.Title = "新建API"
+    }
+    return nil
+}
 
-	g.Cursor = true
+// getFieldPosition 获取字段位置
+func getFieldPosition(field string, maxX, maxY int) (x1, y1, x2, y2 int) {
+    switch field {
+    case "name":
+        return maxX/6+1, maxY/6+2, maxX/2-1, maxY/6+4
+    case "method":
+        return maxX/2+1, maxY/6+2, maxX*5/6-1, maxY/6+4
+    case "path":
+        return maxX/6+1, maxY/6+5, maxX*5/6-1, maxY/6+7
+    case "params":
+        return maxX/6+1, maxY/6+8, maxX*5/6-1, maxY*5/6-1
+    default:
+        return 0, 0, 0, 0
+    }
+}
 
-	return nil
+// createFormField 创建单个表单字段
+func createFormField(g *gocui.Gui, field string) error {
+    maxX, maxY := g.Size()
+    fieldName := "form-" + field
+
+    x1, y1, x2, y2 := getFieldPosition(field, maxX, maxY)
+    fieldView, err := g.SetView(fieldName, x1, y1, x2, y2)
+    if err != nil && err != gocui.ErrUnknownView {
+        return err
+    }
+
+    setupFieldProperties(fieldView, field)
+    return setupFieldKeybindings(g, fieldName, field)
+}
+
+// setupFieldProperties 设置字段属性
+func setupFieldProperties(v *gocui.View, field string) {
+    v.Title = FormInfo.Labels[field]
+    v.Editable = true
+    v.Wrap = true
+
+    // 设置默认值
+    defaultValues := map[string]string{
+        "method": "GET",
+        "params": "{}",
+        "path":   "http://",
+    }
+
+    if defaultValue, exists := defaultValues[field]; exists {
+        fmt.Fprint(v, defaultValue)
+    }
+}
+
+// createFormFields 创建所有表单字段
+func createFormFields(g *gocui.Gui) error {
+    for _, field := range FormInfo.Fields {
+        if err := createFormField(g, field); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+// setupFieldKeybindings 设置字段键绑定
+func setupFieldKeybindings(g *gocui.Gui, fieldName, field string) error {
+    keybindings := []struct {
+        key interface{}
+        handler func(*gocui.Gui, *gocui.View) error
+    }{
+        {gocui.KeyTab, NextFormField},
+        {gocui.KeyEsc, CloseForm},
+    }
+
+    if field != "params" {
+        keybindings = append(keybindings,
+            struct {
+                key interface{}
+                handler func(*gocui.Gui, *gocui.View) error
+            }{
+                gocui.KeyEnter, SaveNewAPI,
+            },
+            struct {
+                key interface{}
+                handler func(*gocui.Gui, *gocui.View) error
+            }{
+                gocui.KeyArrowDown, NextFormField,
+            },
+            struct {
+                key interface{}
+                handler func(*gocui.Gui, *gocui.View) error
+            }{
+                gocui.KeyArrowUp, BeforeFormField,
+            },
+        )
+    }
+
+    for _, kb := range keybindings {
+        if err := g.SetKeybinding(fieldName, kb.key, gocui.ModNone, kb.handler); err != nil {
+            return err
+        }
+    }
+    return nil
+}
+
+// createFormButtons 创建表单按钮
+func createFormButtons(g *gocui.Gui) error {
+    maxX, maxY := g.Size()
+    if v, err := g.SetView("form-buttons", maxX/6+1, maxY*5/6-3, maxX*5/6-1, maxY*5/6-1); err != nil {
+        if err != gocui.ErrUnknownView {
+            return err
+        }
+        v.Frame = false
+        fmt.Fprint(v, "保存(Enter)  取消(Esc)")
+    }
+    return nil
+}
+
+// setupViewOrder 设置视图顺序
+func setupViewOrder(g *gocui.Gui) error {
+    g.SetViewOnTop("form")
+    for _, field := range FormInfo.Fields {
+        g.SetViewOnTop("form-" + field)
+    }
+    g.SetViewOnTop("form-buttons")
+
+    // 设置初始焦点
+    _, err := SetCurrentViewOnTop(g, "form-"+FormInfo.Fields[0])
+    return err
 }
 
 // CloseForm 关闭表单
