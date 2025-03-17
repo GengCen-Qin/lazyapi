@@ -28,10 +28,6 @@ func ShowNewAPIForm(g *gocui.Gui, v *gocui.View) error {
         return err
     }
 
-    if err := createFormButtons(g); err != nil {
-        return err
-    }
-
     if err := setupViewOrder(g); err != nil {
         return err
     }
@@ -167,26 +163,12 @@ func setupFieldKeybindings(g *gocui.Gui, fieldName, field string) error {
     return nil
 }
 
-// createFormButtons 创建表单按钮
-func createFormButtons(g *gocui.Gui) error {
-    maxX, maxY := g.Size()
-    if v, err := g.SetView("form-buttons", maxX/6+1, maxY*5/6-3, maxX*5/6-1, maxY*5/6-1); err != nil {
-        if err != gocui.ErrUnknownView {
-            return err
-        }
-        v.Frame = false
-        fmt.Fprint(v, "保存(Enter)  取消(Esc)")
-    }
-    return nil
-}
-
 // setupViewOrder 设置视图顺序
 func setupViewOrder(g *gocui.Gui) error {
     g.SetViewOnTop("form")
     for _, field := range FormInfo.Fields {
         g.SetViewOnTop("form-" + field)
     }
-    g.SetViewOnTop("form-buttons")
 
     // 设置初始焦点
     _, err := SetCurrentViewOnTop(g, "form-"+FormInfo.Fields[0])
@@ -212,7 +194,6 @@ func CloseForm(g *gocui.Gui, v *gocui.View) error {
 		g.DeleteKeybinding(fieldName, gocui.KeyArrowUp, gocui.ModNone)
 		g.DeleteKeybinding(fieldName, gocui.KeyArrowDown, gocui.ModNone)
 	}
-	g.DeleteView("form-buttons")
 
 	// 重新设置焦点到左侧视图
 	if _, err := SetCurrentViewOnTop(g, "api_list"); err != nil {

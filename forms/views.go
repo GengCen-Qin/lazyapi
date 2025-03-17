@@ -49,11 +49,6 @@ func ensureFormOnTop(g *gocui.Gui) error {
 		return err
 	}
 
-	// 将表单按钮置于顶部
-	if _, err := g.SetViewOnTop("form-buttons"); err != nil {
-		return err
-	}
-
 	// 将所有表单字段置于顶部
 	for _, field := range FormInfo.Fields {
 		fieldName := "form-" + field
