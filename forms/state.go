@@ -2,12 +2,14 @@ package forms
 
 // State 表单状态
 type State struct {
-	Active       bool            // 激活模式
-	CurrentField int             // 当前选中的字段索引
-	Fields       []string        // 表单字段列表
+	Active       bool              // 激活模式
+	CurrentField int               // 当前选中的字段索引
+	Fields       []string          // 表单字段列表
 	Labels       map[string]string // 字段对应的显示标签
-	IsEditing    bool            // 是否处于编辑模式
-	IsDelete     bool            // 是否处于删除模式
+	IsEditing    bool              // 是否处于编辑模式
+	IsDelete     bool              // 是否处于删除模式
+	IsFastApi    bool              // 快速请求模式
+	FastMethod   int               // 快速请求模式的请求方法
 }
 
 // 创建新的默认表单状态
@@ -29,3 +31,9 @@ func NewDefaultState() State {
 
 // 全局可访问的表单状态
 var FormInfo = NewDefaultState()
+
+func (s *State) Reset() {
+	s.IsFastApi = false
+	s.Fields = []string{"name", "method", "path", "params"}
+}
+

@@ -161,6 +161,9 @@ func sendRequest(g *gocui.Gui, api *entity.API, params map[string]interface{}) e
 		db.InsertRequestRecord(api, json_params, string(respBody))
 		fmt.Fprint(bottomView, format_josn)
 	}
+	if FormInfo.IsFastApi {
+		FormInfo.Reset()
+	}
 
 	UpdateRequestRecordList(g)
 	g.SetCurrentView("api_list")

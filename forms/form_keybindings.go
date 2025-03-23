@@ -1,6 +1,8 @@
 package forms
 
 import (
+	"lazyapi/models/entity"
+
 	"github.com/GengCen-Qin/gocui"
 )
 
@@ -28,6 +30,30 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 
 	// 右上视图键绑定 - 'r'键请求当前API
 	if err := g.SetKeybinding("api_list", 'r', gocui.ModNone, RequestAPI); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("api_list", 'g', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return FastAPI(g, v, entity.Method_Get)
+	}); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("api_list", 'p', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return FastAPI(g, v, entity.Method_Post)
+	}); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("record_list", 'g', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return FastAPI(g, v, entity.Method_Get)
+	}); err != nil {
+		return err
+	}
+
+	if err := g.SetKeybinding("record_list", 'p', gocui.ModNone, func(g *gocui.Gui, v *gocui.View) error {
+		return FastAPI(g, v, entity.Method_Post)
+	}); err != nil {
 		return err
 	}
 

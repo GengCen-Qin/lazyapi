@@ -11,8 +11,8 @@ import (
 	"github.com/GengCen-Qin/gocui"
 )
 
-// SaveNewAPI 保存API（新建或编辑）
-func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
+// HandleAPI 保存API（新建或编辑）
+func HandleAPI(g *gocui.Gui, v *gocui.View) error {
 	if !FormInfo.Active {
 		return nil
 	}
@@ -23,33 +23,43 @@ func SaveNewAPI(g *gocui.Gui, v *gocui.View) error {
 	// 收集表单数据
 	var name, path, method, params string
 	nameView, _ := g.View("form-name")
-	pathView, _ := g.View("form-path")
 	methodView, _ := g.View("form-method")
+	pathView, _ := g.View("form-path")
 	paramsView, _ := g.View("form-params")
 
-	name = strings.TrimSpace(nameView.Buffer())
+	if !FormInfo.IsFastApi {
+		name = strings.TrimSpace(nameView.Buffer())
+		method = strings.TrimSpace(methodView.Buffer())
+	}
 	path = strings.TrimSpace(pathView.Buffer())
-	method = strings.TrimSpace(methodView.Buffer())
 	params = strings.TrimSpace(paramsView.Buffer())
 
 	if err := validateAPIForm(g, name, path, method, params); err != nil {
-        statusView, _ := g.View("status")
-        statusView.Clear()
-        fmt.Fprint(statusView, err.Error())
-        return nil
-    }
+		statusView, _ := g.View("status")
+		statusView.Clear()
+		fmt.Fprint(statusView, err.Error())
+		return nil
+	}
 
-	// 如果是编辑模式，更新现有API
-	if FormInfo.IsEditing {
+	if FormInfo.IsFastApi {
+		tmpApi := entity.API{
+			Path:   path,
+			Params: params,
+		}
+		param, _ := tmpApi.GetParams()
+		sendRequest(g, &tmpApi, param)
+	} else if FormInfo.IsEditing {
 		service.EditAPI(entity.SelectedAPI, name, path, method, params)
 	} else {
-		// 否则，创建新API并添加到列表
 		newAPI := service.NewAPI(name, path, method, params)
 		entity.SelectedAPI = newAPI.Id
 	}
 
 	// 更新视图
 	UpdateAPIList(g)
+	if FormInfo.IsFastApi {
+		UpdateRequestRecordList(g)
+	}
 
 	// 关闭表单
 	FormInfo.IsEditing = false
