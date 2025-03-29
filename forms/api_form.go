@@ -199,6 +199,15 @@ func setupFieldKeybindings(g *gocui.Gui, fieldName, field string) error {
 				gocui.KeyArrowUp, BeforeFormField,
 			},
 		)
+	} else {
+		keybindings = append(keybindings,
+			struct {
+				key     interface{}
+				handler func(*gocui.Gui, *gocui.View) error
+			}{
+				gocui.KeyCtrlF, FormatApiParam,
+			},
+		)
 	}
 
 	for _, kb := range keybindings {
@@ -260,6 +269,10 @@ func NextFormField(g *gocui.Gui, v *gocui.View) error {
 
 	if _, err := SetCurrentViewOnTop(g, fieldName); err != nil {
 		return err
+	}
+
+	if fieldName == "form-params" {
+		UpdateStatusBar(g, fieldName)
 	}
 
 	FormInfo.CurrentField = nextField

@@ -29,5 +29,9 @@ var (
 		"respond_info":     "RESPOND_INFO | ↑(page up), ↓(page down), esc(back list)",
 		"request_confirm_view": "ctrl-r(confirm), ctrl-q(cancel)",
 		"record_list":  "RECORD_LIST | d(delete), space(jump detail), tab(switch view), g(fast get request), p(fast post request)",
+		"form-params": "ctrl-f(format), esc(concel)",
+		"form-name": "esc(concel)",
+		"form-method": "esc(concel)",
+		"form-path": "esc(concel)",
 	}
 )
