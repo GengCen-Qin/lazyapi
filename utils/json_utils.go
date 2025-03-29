@@ -3,30 +3,119 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // FormatJSON 格式化JSON字符串
-// 将紧凑的JSON格式化为带缩进的易读格式
+// 将紧凑的JSON格式化为带缩进的易读格式，保持原始文本结构
 func FormatJSON(jsonString string) (string, error) {
     if jsonString == "" {
         return "", nil
     }
 
-    var jsonObj interface{}
-
-    // 先尝试解析为通用接口
-    err := json.Unmarshal([]byte(jsonString), &jsonObj)
-    if err != nil {
-        return jsonString, fmt.Errorf("无法解析JSON: %v", err)
+    // 首先验证JSON是否有效
+    if !json.Valid([]byte(jsonString)) {
+        return jsonString, fmt.Errorf("无效的JSON格式")
     }
 
-    // 格式化为带缩进的JSON
-    formattedJSON, err := json.MarshalIndent(jsonObj, "", "    ")
-    if err != nil {
-        return jsonString, fmt.Errorf("无法格式化JSON: %v", err)
+    // 使用字符级别的格式化，保持原始文本结构
+    return formatJSONPreserveOrder(jsonString)
+}
+
+// formatJSONPreserveOrder 格式化JSON字符串，保持原始顺序和结构
+func formatJSONPreserveOrder(jsonStr string) (string, error) {
+    var result strings.Builder
+    var indentLevel int
+    var inString bool
+    var escapeNext bool
+
+    // 移除所有现有的空白字符
+    jsonStr = removeWhitespace(jsonStr)
+
+    for i, char := range jsonStr {
+        if escapeNext {
+            result.WriteRune(char)
+            escapeNext = false
+            continue
+        }
+
+        switch char {
+        case '\\':
+            result.WriteRune(char)
+            escapeNext = true
+        case '"':
+            result.WriteRune(char)
+            // 如果前一个字符不是转义字符，则切换字符串状态
+            if i == 0 || jsonStr[i-1] != '\\' {
+                inString = !inString
+            }
+        case '{', '[':
+            result.WriteRune(char)
+            if !inString {
+                indentLevel++
+                result.WriteString("\n")
+                result.WriteString(strings.Repeat("    ", indentLevel))
+            }
+        case '}', ']':
+            if !inString {
+                indentLevel--
+                result.WriteString("\n")
+                result.WriteString(strings.Repeat("    ", indentLevel))
+            }
+            result.WriteRune(char)
+        case ',':
+            result.WriteRune(char)
+            if !inString {
+                result.WriteString("\n")
+                result.WriteString(strings.Repeat("    ", indentLevel))
+            }
+        case ':':
+            result.WriteRune(char)
+            if !inString {
+                result.WriteString(" ")
+            }
+        default:
+            result.WriteRune(char)
+        }
     }
 
-    return string(formattedJSON), nil
+    return result.String(), nil
+}
+
+// removeWhitespace 移除JSON字符串中的所有空白字符，但保留字符串内的空白
+func removeWhitespace(jsonStr string) string {
+    var result strings.Builder
+    var inString bool
+    var escapeNext bool
+
+    for i, char := range jsonStr {
+        if escapeNext {
+            result.WriteRune(char)
+            escapeNext = false
+            continue
+        }
+
+        switch char {
+        case '\\':
+            result.WriteRune(char)
+            escapeNext = true
+        case '"':
+            result.WriteRune(char)
+            // 如果前一个字符不是转义字符，则切换字符串状态
+            if i == 0 || jsonStr[i-1] != '\\' {
+                inString = !inString
+            }
+        case ' ', '\t', '\n', '\r':
+            // 只保留字符串内的空白
+            if inString {
+                result.WriteRune(char)
+            }
+        default:
+            result.WriteRune(char)
+        }
+    }
+
+    return result.String()
 }
 
 // IsValidJSON 检查字符串是否为有效的JSON
@@ -63,15 +152,10 @@ func CompactJSON(jsonStr string) (string, error) {
         return "", nil
     }
 
-    var jsonObj interface{}
-    if err := json.Unmarshal([]byte(jsonStr), &jsonObj); err != nil {
-        return jsonStr, err
+    // 验证JSON是否有效
+    if !json.Valid([]byte(jsonStr)) {
+        return jsonStr, fmt.Errorf("无效的JSON格式")
     }
 
-    compacted, err := json.Marshal(jsonObj)
-    if err != nil {
-        return jsonStr, err
-    }
-
-    return string(compacted), nil
+    return removeWhitespace(jsonStr), nil
 }
