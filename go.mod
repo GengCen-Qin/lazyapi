@@ -7,6 +7,10 @@ require github.com/go-resty/resty/v2 v2.16.5
 require (
 	github.com/GengCen-Qin/gocui v0.0.0-20250309043559-c2b155719fbd // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
+	github.com/fatih/color v1.18.0 // indirect
+	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
 )
 
 require (

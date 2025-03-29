@@ -2,9 +2,7 @@ package utils
 
 import (
 	"encoding/json"
-	"fmt"
-	"strings"
-	"unicode"
+	"github.com/hokaccha/go-prettyjson"
 )
 
 // 定义常用ANSI颜色代码
@@ -76,129 +74,15 @@ func InfoText(text string) string {
 
 // ColorizeJSON 为JSON字符串添加语法高亮
 func ColorizeJSON(jsonStr string) (string, error) {
-    // 先验证JSON是否有效
-    var tmp interface{}
-    if err := json.Unmarshal([]byte(jsonStr), &tmp); err != nil {
-        return "", fmt.Errorf("invalid JSON: %w", err)
+    var data interface{}
+    if err := json.Unmarshal([]byte(jsonStr), &data); err != nil {
+        return "", err
     }
 
-    var result strings.Builder
-    var inString bool
-    var escaped bool
+    formatter := prettyjson.NewFormatter()
+    formatter.Indent = 2
+    formatter.Newline = "\n"
+    result, err := formatter.Marshal(data)
 
-    // 更精确的状态处理
-    for i, c := range jsonStr {
-        switch {
-        case escaped:
-            // 处理转义字符后的字符
-            result.WriteRune(c)
-            escaped = false
-
-        case c == '\\':
-            // 标记转义序列的开始
-            result.WriteRune(c)
-            escaped = true
-
-        case c == '"':
-            // 处理字符串边界
-            if inString {
-                result.WriteString(string(c) + ColorReset)
-                inString = false
-            } else {
-                result.WriteString(ColorRed + string(c))
-                inString = true
-            }
-
-        case c == ':' && !inString:
-            // 处理键值分隔符
-            result.WriteString(ColorReset + string(c) + " ")
-
-            // 预先查看下一个非空白字符，为值选择合适的颜色
-            nextColor := ColorBlue // 默认为蓝色
-            for j := i + 1; j < len(jsonStr); j++ {
-                next := rune(jsonStr[j])
-                if unicode.IsSpace(next) {
-                    continue
-                }
-
-                switch next {
-                case '"': // 字符串值将在下一个循环中处理
-                    nextColor = ""
-                case '{', '[': // 对象或数组不需要特殊颜色
-                    nextColor = ColorReset
-                case 't', 'f', 'n': // true, false, null
-                    nextColor = ColorGreen
-                default: // 数字或其他
-                    if next >= '0' && next <= '9' || next == '-' || next == '+' {
-                        nextColor = ColorMagenta
-                    }
-                }
-                break
-            }
-
-            if nextColor != "" {
-                result.WriteString(nextColor)
-            }
-
-        case (c == '{' || c == '}' || c == '[' || c == ']') && !inString:
-            // 处理结构符号，添加颜色重置和格式化空格
-            if i > 0 && !unicode.IsSpace(rune(jsonStr[i-1])) && jsonStr[i-1] != ':' {
-                result.WriteString(ColorReset + " ")
-            }
-            result.WriteString(ColorYellow + string(c) + ColorReset)
-
-            // 在关闭括号后添加换行符以提高可读性（可选）
-            if c == '}' || c == ']' {
-                // 检查下一个字符是否为逗号或结束括号
-                if i+1 < len(jsonStr) && (jsonStr[i+1] == ',' || jsonStr[i+1] == '}' || jsonStr[i+1] == ']') {
-                    // 不添加换行
-                } else {
-                    result.WriteString("\n")
-                }
-            }
-
-        case c == ',' && !inString:
-            // 处理分隔符
-            result.WriteString(ColorReset + string(c) + " ")
-
-        default:
-            // 处理常规字符
-            if !inString && (c >= '0' && c <= '9' || c == '-' || c == '+' || c == '.') {
-                // 数字用洋红色
-                if i == 0 || !unicode.IsDigit(rune(jsonStr[i-1])) && jsonStr[i-1] != '.' && jsonStr[i-1] != '-' {
-                    result.WriteString(ColorMagenta)
-                }
-                result.WriteRune(c)
-                // 检查数字结束
-                if i+1 < len(jsonStr) && !unicode.IsDigit(rune(jsonStr[i+1])) && jsonStr[i+1] != '.' {
-                    result.WriteString(ColorReset)
-                }
-            } else if !inString && (strings.HasPrefix(jsonStr[i:], "true") ||
-                                    strings.HasPrefix(jsonStr[i:], "false") ||
-                                    strings.HasPrefix(jsonStr[i:], "null")) {
-                // 布尔值和null用绿色
-                var keyword string
-                if strings.HasPrefix(jsonStr[i:], "true") {
-                    keyword = "true"
-                } else if strings.HasPrefix(jsonStr[i:], "false") {
-                    keyword = "false"
-                } else {
-                    keyword = "null"
-                }
-
-                if i == 0 || !unicode.IsLetter(rune(jsonStr[i-1])) {
-                    result.WriteString(ColorGreen + keyword + ColorReset)
-                    i += len(keyword) - 1  // 跳过关键字的其余部分
-                } else {
-                    result.WriteRune(c)
-                }
-            } else {
-                result.WriteRune(c)
-            }
-        }
-    }
-
-    // 确保结束时重置颜色
-    result.WriteString(ColorReset)
-    return result.String(), nil
+    return string(result), err
 }
