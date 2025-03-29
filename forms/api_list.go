@@ -178,6 +178,14 @@ func JumpOut(g *gocui.Gui, v *gocui.View) error {
 	return err
 }
 
+func SelectLastRequestRecord(g *gocui.Gui) {
+	if len(service.RequestRecordList()) == 0 {
+		return
+	}
+	entity.SelectedQuestRecord = service.RequestRecordList()[0].Id
+	UpdateRequestRecordList(g)
+}
+
 func MoveSelection[T any, ID comparable](
     listProvider func() []T,
     idGetter func(T) ID,

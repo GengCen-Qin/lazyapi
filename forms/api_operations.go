@@ -7,6 +7,7 @@ import (
 	"lazyapi/models/db"
 	"lazyapi/models/entity"
 	"lazyapi/models/service"
+	"lazyapi/navigation"
 
 	"github.com/GengCen-Qin/gocui"
 )
@@ -45,9 +46,13 @@ func HandleAPI(g *gocui.Gui, v *gocui.View) error {
 		tmpApi := entity.API{
 			Path:   path,
 			Params: params,
+			Method: entity.MethodTitle[FormInfo.FastMethod],
 		}
 		param, _ := tmpApi.GetParams()
 		sendRequest(g, &tmpApi, param)
+		SelectLastRequestRecord(g)
+		navigation.NavigateToRecordView(g)
+		UpdateRequestRecordList(g)
 	} else if FormInfo.IsEditing {
 		service.EditAPI(entity.SelectedAPI, name, path, method, params)
 	} else {
