@@ -1,14 +1,23 @@
 package db
 
 import (
-    "database/sql"
-    "log"
-    "os"
-    "path/filepath"
-    "runtime"
+	"database/sql"
+	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 
-    _ "github.com/mattn/go-sqlite3"
+	_ "github.com/mattn/go-sqlite3"
+	"github.com/pressly/goose/v3"
 )
+
+type silentLogger struct{}
+
+func (s *silentLogger) Fatalf(format string, v ...interface{}) {
+}
+
+func (s *silentLogger) Printf(format string, v ...interface{}) {
+}
 
 var dbInstance *sql.DB
 
@@ -23,7 +32,6 @@ func CloseDB() {
     if dbInstance != nil {
         dbInstance.Close()
         dbInstance = nil
-        log.Println("数据库连接已关闭")
     }
 }
 
@@ -42,28 +50,21 @@ func initDB() {
 }
 
 func createTables() error {
-	db := GetDB()
-    query := `
-    CREATE TABLE IF NOT EXISTS apis (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        path TEXT NOT NULL,
-        method TEXT NOT NULL,
-        params TEXT NOT NULL
-    );
+    db := GetDB()
 
-    CREATE TABLE IF NOT EXISTS request_records (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        path TEXT NOT NULL,
-        method TEXT NOT NULL,
-        params TEXT NOT NULL,
-        respond TEXT NOT NULL,
-        request_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-    `
-    _, err := db.Exec(query)
-    return err
+    workDir, _ := os.Getwd()
+    migrationsDir := filepath.Join(workDir, "migrations")
+
+    // 设置 goose 使用静默的日志记录器
+    goose.SetLogger(&silentLogger{})
+    goose.SetDialect("sqlite3")
+
+    err := goose.Up(db, migrationsDir)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }
 
 func dbPath() string {
