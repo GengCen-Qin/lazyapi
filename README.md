@@ -1,66 +1,68 @@
 # Lazyapi
 
-从 [lazygit](https://github.com/jesseduffield/lazygit) 中受到启发，并且无法忍受现有的Api管理工具的启动速度慢，操作繁琐等问题，希望能在命令行中快速管理请求并进行发送查看
+Inspired by [lazygit](https://github.com/jesseduffield/lazygit), Lazyapi aims to solve the slow startup and cumbersome operation issues of existing API management tools, allowing you to quickly manage API requests and view responses from the command line.
 
-## Feature
+[中文文档](./README.zh-CN.md)
 
-1. Api的增删改查
+## Features
 
-<img src="./pic/1743236384511.png" alt="增加" style="zoom:30%;" />
+1. CRUD operations for APIs
 
-2. Api请求发送，暂支持Get/Post请求，可配置请求体信息（统一使用Json），并展示响应内容
+<img src="./pic/1743236384511.png" alt="Add API" style="zoom:30%;" />
 
-<img src="./pic/1743236340919.png" alt="增加" style="zoom:30%;" />
+2. Send API requests with support for GET/POST methods, configurable request body (JSON format), and response display
 
-3. 数据本地存储，使用SQLite
+<img src="./pic/1743236340919.png" alt="Request" style="zoom:30%;" />
 
-Mac用户会自动在 ~/Library/Application Support/lazyapi 下生成lazyapi.db文件
+3. Local data storage using SQLite
 
-## 快捷键
+   For Mac users, the lazyapi.db file is generated in the ~/Library/Application Support/lazyapi directory. Database versioning is managed with [goose](https://github.com/pressly/goose), automatically executing all migration files in the migrations directory when new versions add new fields.
 
-### API 列表视图 (API_LIST)
-- `n` - 创建新API
-- `e` - 编辑API
-- `d` - 删除API
-- `r` - 发起请求
-- `空格` - 跳转到详情
-- `tab` - 切换视图(在API列表和请求记录列表切换)
-- `g` - 发起快速GET请求
-- `p` - 发起快速POST请求
+## Keyboard Shortcuts
 
-### API 详情视图 (API_INFO)
-- `↑` - 向上翻页
-- `↓` - 向下翻页
-- `esc` - 返回列表
+### API List View (API_LIST)
+- `n` - Create new API
+- `e` - Edit API
+- `d` - Delete API
+- `r` - Send request
+- `space` - View details
+- `tab` - Switch views (between API list and request record list)
+- `g` - Quick GET request
+- `p` - Quick POST request
 
-### 响应信息视图 (RESPOND_INFO)
-- `↑` - 向上翻页
-- `↓` - 向下翻页
-- `esc` - 返回列表
+### API Details View (API_INFO)
+- `↑` - Scroll up
+- `↓` - Scroll down
+- `esc` - Return to list
 
-### 请求确认视图 (REQUEST_CONFIRM_VIEW)
-- `ctrl-r` - 确认
-- `ctrl-q` - 取消
+### Response Info View (RESPOND_INFO)
+- `↑` - Scroll up
+- `↓` - Scroll down
+- `esc` - Return to list
 
-### 记录列表视图 (RECORD_LIST)
-- `d` - 删除
-- `空格` - 跳转到详情
-- `tab` - 切换视图
-- `g` - 快速GET请求
-- `p` - 快速POST请求
+### Request Confirmation View (REQUEST_CONFIRM_VIEW)
+- `ctrl-r` - Confirm
+- `ctrl-q` - Cancel
 
-### API新建和编辑视图
-- `esc` - 取消
+### Record List View (RECORD_LIST)
+- `d` - Delete record
+- `space` - View details
+- `tab` - Switch views
+- `g` - Quick GET request
+- `p` - Quick POST request
 
-编写json信息时支持 `ctrl-f` 进行信息格式化
+### API Creation and Editing View
+- `esc` - Cancel
 
-## 待改进
+When writing JSON, use `ctrl-f` to format the content
 
-1. 底层使用[gocui](https://github.com/jroimartin/gocui) 对中文支持不好，目前我fork了一个版本，并临时解决了中文输入与展示问题。但是对于光标移动和字符删除仍有问题。比如删除上一个字符，则需要按两下删除键，才能把字符完整删除掉，光标移动也是类似的。英文使用无误。后期待修改
-2. 暂时仅支持Get和Post请求，后续会加上其他请求方式，并增加Header的设置
-3. 需要能通过SwaggerUrl快速导入Api数据，可快速上手
-4. 支持可配置
+## Future Improvements
 
-## 使用方式
+1. The underlying [gocui](https://github.com/jroimartin/gocui) library has limited Chinese language support. I've forked a version with temporary fixes for Chinese input and display, but cursor movement and character deletion still have issues (deleting Chinese characters requires pressing the delete key twice, with similar issues for cursor movement). No such problems with English.
+2. Currently only supports GET and POST requests. Planning to add other request methods and header configuration.
+3. Planning to add the ability to quickly import API data via Swagger URL.
+4. Add more configuration options.
 
-下载代码后执行：`go build` 得到对应的可执行文件
+## Usage
+
+Download the code and run: `go build` to get the executable file
