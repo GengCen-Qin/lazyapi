@@ -194,7 +194,7 @@ func MoveSelection[T any, ID comparable](
     updateUI func(),
 ) error {
     list := listProvider()
-    if len(list) <= 1 {
+    if len(list) < 1 {
         return nil
     }
 
