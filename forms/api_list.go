@@ -221,3 +221,49 @@ func MoveSelection[T any, ID comparable](
     updateUI()
     return nil
 }
+
+func ApiListMouseClick(g *gocui.Gui, v *gocui.View) error {
+    // 获取鼠标点击位置
+    _, cy := v.Cursor()
+
+    // 获取视图当前的滚动位置
+    _, oy := v.Origin()
+
+    // 计算实际点击的行索引
+    lineIndex := oy + cy
+
+    list := service.APIList()
+    if lineIndex < 0 || lineIndex >= len(list) {
+        return nil // 点击位置不在有效范围内
+    }
+
+    // 更新选中的API ID
+    entity.SelectedAPI = list[lineIndex].Id
+
+    // 更新UI显示
+    UpdateAPIList(g)
+    return nil
+}
+
+func RequestRecordMouseClick(g *gocui.Gui, v *gocui.View) error {
+    // 获取鼠标点击位置
+    _, cy := v.Cursor()
+
+    // 获取视图当前的滚动位置
+    _, oy := v.Origin()
+
+    // 计算实际点击的行索引
+    lineIndex := oy + cy
+
+    list := service.RequestRecordList()
+    if lineIndex < 0 || lineIndex >= len(list) {
+        return nil // 点击位置不在有效范围内
+    }
+
+    // 更新选中的记录ID
+    entity.SelectedQuestRecord = list[lineIndex].Id
+
+    // 更新UI显示
+    UpdateRequestRecordList(g)
+    return nil
+}

@@ -94,5 +94,15 @@ func SetupFormKeybindings(g *gocui.Gui) error {
 		return err
 	}
 
+ 	// 为API列表视图设置鼠标点击处理函数
+    if err := g.SetKeybinding("api_list", gocui.MouseLeft, gocui.ModNone, ApiListMouseClick); err != nil {
+        return err
+    }
+
+    // 为请求记录列表视图设置鼠标点击处理函数
+    if err := g.SetKeybinding("record_list", gocui.MouseLeft, gocui.ModNone, RequestRecordMouseClick); err != nil {
+        return err
+    }
+
 	return nil
 }
