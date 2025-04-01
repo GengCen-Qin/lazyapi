@@ -84,6 +84,40 @@ func NextView(g *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func MouseClick(g *gocui.Gui, v *gocui.View) error {
+    viewName := v.Name()
+
+    viewIndex := -1
+    for i, name := range common.ViewArr {
+        if name == viewName {
+            viewIndex = i
+            break
+        }
+    }
+
+    if viewIndex == -1 {
+        return nil
+    }
+
+    if viewIndex == common.ViewActiveIndex {
+        return nil
+    }
+
+    if _, err := SetCurrentViewOnTop(g, viewName); err != nil {
+        return err
+    }
+
+    common.ViewActiveIndex = viewIndex
+
+    g.Update(func(g *gocui.Gui) error {
+        UpdateAPIList(g)
+        UpdateRequestRecordList(g)
+        return nil
+    })
+
+    return nil
+}
+
 func NextInfoView(g *gocui.Gui, v *gocui.View) error {
 	// 计算下一个视图索引
 	nextIndex := (common.InfoViewActiveIndex + 1) % len(common.InfoViewArr)
