@@ -6,6 +6,18 @@ import (
 	"github.com/GengCen-Qin/gocui"
 )
 
+const (
+    ScrollUp   = -1
+    ScrollDown = 1
+)
+
+var (
+    ScrollApiInfoViewUp     = ScrollViewFactory("api_info", ScrollUp)
+    ScrollApiInfoViewDown   = ScrollViewFactory("api_info", ScrollDown)
+    ScrollRespondInfoViewUp   = ScrollViewFactory("respond_info", ScrollUp)
+    ScrollRespondInfoViewDown = ScrollViewFactory("respond_info", ScrollDown)
+)
+
 func ScrollViewPoint(g *gocui.Gui, v *gocui.View, view_name string, direact int) error {
 	targetView, err := g.View(view_name)
 	if err != nil {
@@ -14,20 +26,10 @@ func ScrollViewPoint(g *gocui.Gui, v *gocui.View, view_name string, direact int)
     return ScrollView(targetView, direact)
 }
 
-func ScrollApiInfoViewUp(g *gocui.Gui, v *gocui.View) error {
-    return ScrollViewPoint(g, v, "api_info", -1)
-}
-
-func ScrollApiInfoViewDown(g *gocui.Gui, v *gocui.View) error {
-	return ScrollViewPoint(g, v, "api_info", 1)
-}
-
-func ScrollRespondInfoViewUp(g *gocui.Gui, v *gocui.View) error {
-	return ScrollViewPoint(g, v, "respond_info", -1)
-}
-
-func ScrollRespondInfoViewDown(g *gocui.Gui, v *gocui.View) error {
-	return ScrollViewPoint(g, v, "respond_info", 1)
+func ScrollViewFactory(viewName string, direction int) func(*gocui.Gui, *gocui.View) error {
+    return func(g *gocui.Gui, v *gocui.View) error {
+        return ScrollViewPoint(g, v, viewName, direction)
+    }
 }
 
 // ScrollView 通用滚动视图函数
