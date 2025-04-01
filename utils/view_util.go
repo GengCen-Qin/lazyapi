@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"strings"
+
 	"github.com/GengCen-Qin/gocui"
 )
 
@@ -31,18 +33,37 @@ func ScrollRespondInfoViewDown(g *gocui.Gui, v *gocui.View) error {
 // ScrollView 通用滚动视图函数
 // 按指定的增量调整视图的原点
 func ScrollView(v *gocui.View, dy int) error {
-	if v == nil {
+    if v == nil {
         return nil
     }
 
     ox, oy := v.Origin()
+    _, viewHeight := v.Size()
 
-    if oy+dy >= 0 {  // 防止滚动到负位置
+    // 获取视图内容的总行数
+    contentHeight := len(strings.Split(v.Buffer(), "\n")) - 1 // -1 因为最后一个换行符会产生一个空行
 
-        if err := v.SetOrigin(ox, oy+dy); err != nil {
+    // 计算最大可滚动位置(如果内容不足以填满视图，则不需要滚动)
+    maxScroll := contentHeight - viewHeight
+    if maxScroll < 0 {
+        maxScroll = 0
+    }
+
+    // 计算新的原点位置，确保不超出有效范围
+    newOy := oy + dy
+    if newOy < 0 {
+        newOy = 0 // 防止向上滚动超出顶部
+    } else if newOy > maxScroll {
+        newOy = maxScroll // 防止向下滚动超出底部
+    }
+
+    // 只有当位置确实需要改变时才设置新的原点
+    if newOy != oy {
+        if err := v.SetOrigin(ox, newOy); err != nil {
             return err
         }
     }
+
     return nil
 }
 

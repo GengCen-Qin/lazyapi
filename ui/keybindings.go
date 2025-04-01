@@ -63,16 +63,29 @@ func setupScrollKeybindings(g *gocui.Gui) error {
     if err := g.SetKeybinding("api_list", gocui.KeyCtrlRsqBracket, gocui.ModNone, utils.ScrollRespondInfoViewDown); err != nil {
         return err
     }
-    if err := g.SetKeybinding("respond_info", gocui.KeyArrowUp, gocui.ModNone, utils.ScrollRespondInfoViewUp); err != nil {
+    if err := setupViewScrolling(g, "respond_info", utils.ScrollRespondInfoViewUp, utils.ScrollRespondInfoViewDown); err != nil {
         return err
     }
-    if err := g.SetKeybinding("respond_info", gocui.KeyArrowDown, gocui.ModNone, utils.ScrollRespondInfoViewDown); err != nil {
+    if err := setupViewScrolling(g, "api_info", utils.ScrollApiInfoViewUp, utils.ScrollApiInfoViewDown); err != nil {
         return err
     }
-    if err := g.SetKeybinding("api_info", gocui.KeyArrowUp, gocui.ModNone, utils.ScrollApiInfoViewUp); err != nil {
+    return nil
+}
+
+func setupViewScrolling(g *gocui.Gui, viewName string, upFunc, downFunc func(*gocui.Gui, *gocui.View) error) error {
+    // 箭头键绑定
+    if err := g.SetKeybinding(viewName, gocui.KeyArrowUp, gocui.ModNone, upFunc); err != nil {
         return err
     }
-    if err := g.SetKeybinding("api_info", gocui.KeyArrowDown, gocui.ModNone, utils.ScrollApiInfoViewDown); err != nil {
+    if err := g.SetKeybinding(viewName, gocui.KeyArrowDown, gocui.ModNone, downFunc); err != nil {
+        return err
+    }
+
+    // 鼠标滚轮绑定
+    if err := g.SetKeybinding(viewName, gocui.MouseWheelUp, gocui.ModNone, upFunc); err != nil {
+        return err
+    }
+    if err := g.SetKeybinding(viewName, gocui.MouseWheelDown, gocui.ModNone, downFunc); err != nil {
         return err
     }
 
