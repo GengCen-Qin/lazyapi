@@ -46,7 +46,6 @@ func UpdateAPIList(g *gocui.Gui) {
 	    })
 		EnsureSelectionVisible(leftView, index)
 		// 保证底色特效随着移动而跟着移动
-		leftView.SetCursor(0, index)
 		api, _ := db.FindAPI(entity.SelectedAPI)
 		var buffer bytes.Buffer
 	    format_json, _ := utils.PrettyPrintJSON(api.Params)
